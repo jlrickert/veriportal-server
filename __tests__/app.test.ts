@@ -1,11 +1,9 @@
 import * as request from "supertest";
-import { makeExecutableSchema } from "graphql-tools";
 
 import { newGraphqlServer } from "../src/server";
 import { resolvers } from "../src/resolvers";
-import { typeDefs } from "../src/schema";
+import { schema } from "../src/schema";
 
-const schema = makeExecutableSchema({ typeDefs, resolvers });
 const app = newGraphqlServer(schema);
 
 describe("routes : index", () => {
