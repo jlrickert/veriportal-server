@@ -1,13 +1,10 @@
-import * as dotenv from "dotenv";
+import * as config from "./config";
+import { makeExecutableSchema, addMockFunctionsToSchema } from "graphql-tools";
 
+import { schema } from "./schema";
 import newServer from "./server";
 
-dotenv.config();
+addMockFunctionsToSchema({ schema, mocks: {} });
+const app = newServer(schema);
 
-console.log(process.env.APP_PORT);
-
-const port = process.env.APP_PORT || 3001;
-
-const app = newServer();
-
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(config.port, () => console.log(`Listening on port ${config.port}`));

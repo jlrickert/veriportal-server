@@ -3,7 +3,6 @@
     "outDir": "build",
     "module": "commonjs",
     "target": "esnext",
-    "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "allowJs": true
