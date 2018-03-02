@@ -5,43 +5,44 @@ import { graphqlExpress, graphiqlExpress } from "apollo-server-express";
 
 import * as config from "./config";
 import { IUser } from "./schema/types";
-import { Connector } from "./connector";
-import { authenticateJWT } from "./auth";
-import Users from "./models/Users";
+import { MemConnection, SqlConnection } from "./connector";
 
-export interface IGraphqlServerOptions {
-  connector: any;
+import { authenticateJWT } from "./auth";
+import { SqlUsers, MemUsers, connectToUsers } from "./models/Users";
+import { GraphQLSchema } from "graphql";
+
+export type IGraphqlServerOptions = {
+  connector: MemConnection | SqlConnection;
   authenticate: (
     req: express.Request,
     findUser: (id: number) => Promise<IUser>
-  ) => Promise<IUser | null>;
-}
+  ) => Promise<IUser>;
+};
 
 export const newGraphqlServer = (
-  schema,
+  schema: GraphQLSchema,
   opts: IGraphqlServerOptions = {
-    connector: new Connector("rawr"),
+    connector: {} as MemConnection,
     authenticate: authenticateJWT
   }
 ): express.Express => {
   const app = express();
 
-  const Users_ = new Users(opts.connector);
+  const Users_ = connectToUsers(opts.connector);
+
   const getAuthenticatedUser = async (id: number): Promise<IUser> =>
-    await Users_.getUser(id);
+    await Users_.fetchUser(id);
 
   const endpoint = app.use(
     config.endpoint,
     bodyParser.json(),
-    graphqlExpress(req => {
-      return {
-        schema,
-        context: {
-          user: opts.authenticate(req, getAuthenticatedUser),
-          Users: Users_
-        }
-      };
-    })
+    graphqlExpress(req => ({
+      schema,
+      context: {
+        user: opts.authenticate(req, getAuthenticatedUser),
+        Users: Users_
+      }
+    }))
   );
 
   if (!config.isProduction) {

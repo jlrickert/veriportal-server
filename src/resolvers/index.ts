@@ -1,16 +1,10 @@
+import { IUser } from "../schema/types";
+
 export const resolvers = {
-  Query: {
-    books(root, params, ctx) {
-      return [
-        {
-          id: 1,
-          title: "example title",
-          author: ctx.user
-        }
-      ];
-    }
-  },
-  Mutation: {}
+  Query: {},
+  Mutation: {
+    signup: (_, params: IUser, ctx) => ctx.Users.signup(params)
+  }
 };
 
 export default resolvers;

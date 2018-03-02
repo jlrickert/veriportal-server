@@ -1,8 +1,9 @@
-import { makeExecutableSchema, addMockFunctionsToSchema } from "graphql-tools";
-
-import typeDefs from "./typeDefs";
 import { resolvers } from "../resolvers";
 
-export const schema = makeExecutableSchema({ typeDefs, resolvers });
-addMockFunctionsToSchema({ schema, mocks: {}, preserveResolvers: true });
+import { readGraphQLFile, buildSchema } from "./utils";
+import { GraphQLSchema } from "graphql";
+
+export const typeDefs = readGraphQLFile("typeDefs.graphql");
+export const schema: GraphQLSchema = buildSchema(typeDefs, resolvers);
+
 export default schema;
