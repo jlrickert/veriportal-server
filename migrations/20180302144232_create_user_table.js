@@ -1,7 +1,7 @@
 exports.up = async (knex, Promise) => {
-  const exists = await knex.schema.hasTable("User");
+  const exists = await knex.schema.hasTable("users");
   if (!exists) {
-    return knex.schema.createTable("User", t => {
+    return knex.schema.createTable("users", t => {
       t.increments("id").primary();
 
       t
@@ -9,8 +9,8 @@ exports.up = async (knex, Promise) => {
         .unique()
         .notNullable();
 
-      t.string("firstName");
-      t.string("lastName");
+      t.string("first_name");
+      t.string("last_name");
 
       t
         .boolean("admin")
@@ -23,8 +23,8 @@ exports.up = async (knex, Promise) => {
 };
 
 exports.down = async (knex, Promise) => {
-  const exists = knex.schema.hasTable("User");
+  const exists = knex.schema.hasTable("users");
   if (exists) {
-    return Promise.all([knex.schema.dropTable("User")]);
+    return Promise.all([knex.schema.dropTable("users")]);
   }
 };

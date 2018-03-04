@@ -1,29 +1,26 @@
 exports.seed = (knex, Promise) => {
-  return knex
-    .table("User")
+  return knex("users")
     .del()
     .then(() =>
-      knex
-        .table("User")
-        .insert([
-          {
-            username: "jlrickert",
-            firstName: "Jared",
-            lastName: "Rickert",
-            admin: true
-          },
-          {
-            username: "dmrickert",
-            firstName: "Donna",
-            lastName: "Rickert",
-            admin: false
-          },
-          {
-            username: "jjrickert",
-            firstName: "Justen",
-            lastName: "Rickert",
-            admin: false
-          }
-        ])
+      knex("users").insert([
+        {
+          username: "jlrickert",
+          first_name: "Jared",
+          last_name: "Rickert",
+          admin: true
+        },
+        {
+          username: "dmrickert",
+          first_name: "Donna",
+          last_name: "Rickert",
+          admin: false
+        },
+        {
+          username: "jjrickert",
+          first_name: "Justen",
+          last_name: "Rickert",
+          admin: false
+        }
+      ])
     );
 };

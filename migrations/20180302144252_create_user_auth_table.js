@@ -1,19 +1,19 @@
 exports.up = async (knex, Promise) => {
-  const exists = await knex.schema.hasTable("Auth");
+  const exists = await knex.schema.hasTable("auth");
   if (!exists) {
-    return knex.schema.createTable("Auth", t => {
+    return knex.schema.createTable("auth", t => {
       t.increments("id").primary();
 
       t
-        .integer("userId")
+        .integer("user_id")
         .unsigned()
         .unique()
         .notNullable()
-        .references("User.id")
+        .references("users.id")
         .onDelete("CASCADE")
         .onUpdate("CASCADE");
 
-      t.string("refreshToken").unique();
+      t.string("refresh_token").unique();
 
       t.string("passwordHash");
     });
@@ -21,8 +21,8 @@ exports.up = async (knex, Promise) => {
 };
 
 exports.down = async (knex, Promise) => {
-  const exists = await knex.schema.hasTable("Auth");
+  const exists = await knex.schema.hasTable("auth");
   if (exists) {
-    return Promise.all([knex.schema.dropTable("Auth")]);
+    return Promise.all([knex.schema.dropTable("auth")]);
   }
 };
