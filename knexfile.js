@@ -5,21 +5,23 @@ const parse = require('pg-connection-string').parse;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
+const DbConfig = parse(process.env.DATABASE_URL);
+
 module.exports = {
 
   development: DATABASE_URL && {
     client: 'pg',
-    connection: Object.assign({}, `${parse(DATABASE_URL)}-dev`, { ssl: true })
+    connection: Object.assign({}, DbConfig, { database: DbConfig.database + '-dev'})
   },
 
   test: DATABASE_URL && {
     client: 'pg',
-    connection: Object.assign({}, `${parse(DATABASE_URL)}-test`, { ssl: true })
+    connection: Object.assign({}, DbConfig, { database: DbConfig.database + '-test'})
   },
 
   production: DATABASE_URL && {
     client: 'pg',
-    connection: Object.assign({}, parse(DATABASE_URL), { ssl: true }),
+    connection: Object.assign({}, DbConfig),
     pool: {
       min: 2,
       max: 10
