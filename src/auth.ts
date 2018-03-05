@@ -7,7 +7,6 @@ import * as randToken from "rand-token";
 
 import * as config from "./config";
 import { IUser } from "./schema/types";
-import { Connector } from "./connector";
 
 export const authenticateJWT = async (
   req: Request,

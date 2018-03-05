@@ -1,17 +1,47 @@
 import * as Knex from "knex";
 
 import { IUser } from "./schema/types";
+import { ConnectionOptions } from "pg-connection-string";
 
 export type TConnection = SqlConnection | MemConnection;
+export type SqlConnectionOptions = Knex.Config;
 
 export class SqlConnection {
-  constructor(public knex: Knex) {}
-  seed = (seed): void => {
-    throw new Error("Not implemented");
+  readonly knex: Knex;
+  constructor(config: SqlConnectionOptions) {
+    this.knex = Knex(config);
+  }
+
+  /**
+   * Seeds database with initial data. This is great for testing and setting up
+   * data for a development database
+   */
+  seed = async (): Promise<void> => {
+    await this.knex.seed.run();
+    console.log("Seeded database");
   };
 
-  migrate = (): void => {
-    throw new Error("Not implemented");
+  /**
+   * Migrate schema to the latest
+   */
+  migrate = async (): Promise<void> => {
+    await this.knex.migrate.latest();
+    console.log("Migrate database");
+  };
+
+  /**
+   * Get the current migration number
+   */
+  currentVersion = async (): Promise<void> => {
+    await this.knex.migrate.currentVersion();
+  };
+
+  /**
+   * rollback database to its initial state
+   */
+  rollback = async (): Promise<void> => {
+    await this.knex.migrate.rollback();
+    console.log("Rollded back database");
   };
 }
 
@@ -42,4 +72,3 @@ export function matchConnector<T>(
     }
   };
 }
-// export const matchConnector = <T>(conn: Connection): (a: Argument) => T {};

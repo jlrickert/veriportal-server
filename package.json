@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "nodemon --watch src --watch .env src/index.ts",
-    "test": "NODE_ENV=testing jest --coverage --verbose --watch",
+    "test": "NODE_ENV=test jest --coverage --verbose --watch",
     "knex": "knex",
     "migrate": "npm run knex migrate:latest",
     "precommit": "lint-staged"
