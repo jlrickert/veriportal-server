@@ -20,17 +20,6 @@ export interface IUsers {
   ) => Promise<IAuthPayload>;
 }
 
-export interface IMatchUserArg<T> {
-  SQLUsers: (users: SqlUsers) => T;
-  MemUsers: (users: MemUsers) => T;
-}
-
-export const connectToUsers = (conn: TConnection): IUsers =>
-  matchConnector({
-    Sql: c => new SqlUsers(c) as IUsers,
-    Mem: c => new MemUsers(c) as IUsers
-  })(conn);
-
 export class SqlUsers implements IUsers {
   conn: SqlConnection;
   constructor(conn: SqlConnection) {
@@ -49,36 +38,3 @@ export class SqlUsers implements IUsers {
 
   signup = async (): Promise<IAuthPayload> => Promise.reject("Not implemented");
 }
-
-export class MemUsers implements IUsers {
-  state: MemConnection;
-  constructor(initialState: MemConnection) {
-    this.state = initialState;
-  }
-
-  fetchUser = async (id: number): Promise<IUser> =>
-    new Promise((resolve, reject) => {
-      const user: IUser = this.state.users[id];
-      if (user) {
-        resolve(user);
-      } else {
-        reject(new Error(`User ${id} does'nt exist`));
-      }
-    });
-
-  fetchUsers = async (): Promise<IUser[]> => Promise.resolve(this.state.users);
-
-  signup = async (): Promise<IAuthPayload> => Promise.reject("Not implemented");
-  // signup = async (params): Promise<IAuthPayload> =>
-  //   Promise.resolve({
-  //     user: {
-  //       username: params.username,
-  //       firstName: params.firstName,
-  //       lastName: params.lastName,
-  //       admin: false
-  //     },
-  //     refreshToken: Auth.newRefreshToken()
-  //   });
-}
-
-export default SqlUsers;

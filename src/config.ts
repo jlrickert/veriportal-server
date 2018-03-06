@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as dotenv from "dotenv";
-import { KnexConfig } from "./connector";
+import { SqlConnectionOptions } from "./connector";
 
 dotenv.config();
 
@@ -25,4 +25,6 @@ const getSecretKey = key => {
 
 export const secretKey: string = getSecretKey(process.env.SECRET_KEY);
 
-export const knexConfig: KnexConfig = require("../knexfile")[environment];
+export const knexConfig: SqlConnectionOptions = require("../knexfile")[
+  environment
+];

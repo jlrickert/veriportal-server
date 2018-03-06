@@ -1,8 +1,10 @@
-import * as config from "./config";
+import * as Config from "./config";
 
 import { schema } from "./schema";
-import newServer from "./server";
+import { SqlConnection } from "./connector";
+import { appServerWithDefaults } from "./server";
 
-const app = newServer(schema);
+const conn = new SqlConnection(Config.knexConfig);
+const app = appServerWithDefaults(schema, conn);
 
-app.listen(config.port, () => console.log(`Listening on port ${config.port}`));
+app.listen(Config.port, () => console.log(`Listening on port ${Config.port}`));

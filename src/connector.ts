@@ -1,9 +1,9 @@
 import * as Knex from "knex";
-
-import { IUser } from "./schema/types";
 import { ConnectionOptions } from "pg-connection-string";
 
-export type TConnection = SqlConnection | MemConnection;
+import { IUser } from "./schema/types";
+
+export type TConnection = SqlConnection;
 export type SqlConnectionOptions = Knex.Config;
 
 export class SqlConnection {
@@ -42,33 +42,5 @@ export class SqlConnection {
   rollback = async (): Promise<void> => {
     await this.knex.migrate.rollback();
     console.log("Rollded back database");
-  };
-}
-
-export interface IMemConnectionArgs {
-  users: { [id: number]: IUser };
-}
-
-export class MemConnection implements IMemConnectionArgs {
-  users: { [id: number]: IUser };
-  constructor(public state: IMemConnectionArgs = { users: {} }) {
-    this.users = state.users;
-  }
-}
-
-export interface IMatchConnectorPattern<T> {
-  Sql: (conn: SqlConnection) => T;
-  Mem: (conn: MemConnection) => T;
-}
-
-export function matchConnector<T>(
-  conn: IMatchConnectorPattern<T>
-): (a: TConnection) => T {
-  return (c: TConnection): T => {
-    if (c instanceof SqlConnection) {
-      return conn.Sql(c);
-    } else if (c instanceof MemConnection) {
-      return conn.Mem(c);
-    }
   };
 }

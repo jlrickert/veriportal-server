@@ -1,34 +1,31 @@
+import { GraphQLSchema } from "graphql";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
 import * as express from "express";
 import { graphqlExpress, graphiqlExpress } from "apollo-server-express";
 
+import { authenticateJWT } from "./auth";
 import * as config from "./config";
 import { IUser } from "./schema/types";
-import { MemConnection, SqlConnection } from "./connector";
-
-import { authenticateJWT } from "./auth";
-import { SqlUsers, MemUsers, connectToUsers } from "./models/Users";
-import { GraphQLSchema } from "graphql";
+import { TConnection } from "./connector";
+import { SqlUsers, IUsers } from "./models/Users";
 
 export type IGraphqlServerOptions = {
-  connector: MemConnection | SqlConnection;
+  connector: TConnection;
   authenticate: (
     req: express.Request,
+    res: express.Response,
     findUser: (id: number) => Promise<IUser>
   ) => Promise<IUser>;
 };
 
-export const newGraphqlServer = (
+export const appServer = (
   schema: GraphQLSchema,
-  opts: IGraphqlServerOptions = {
-    connector: {} as MemConnection,
-    authenticate: authenticateJWT
-  }
+  opts: IGraphqlServerOptions
 ): express.Express => {
   const app = express();
 
-  const Users_ = connectToUsers(opts.connector);
+  const Users_: IUsers = new SqlUsers(opts.connector);
 
   const getAuthenticatedUser = async (id: number): Promise<IUser> =>
     await Users_.fetchUser(id);
@@ -36,10 +33,10 @@ export const newGraphqlServer = (
   const endpoint = app.use(
     config.endpoint,
     bodyParser.json(),
-    graphqlExpress(req => ({
+    graphqlExpress((req, res) => ({
       schema,
       context: {
-        user: opts.authenticate(req, getAuthenticatedUser),
+        user: opts.authenticate(req, res, getAuthenticatedUser),
         Users: Users_
       }
     }))
@@ -52,4 +49,21 @@ export const newGraphqlServer = (
   return app;
 };
 
-export default newGraphqlServer;
+export const appServerWithDefaults = (
+  schema,
+  conn: TConnection
+): express.Express => {
+  return appServer(schema, {
+    connector: conn,
+    authenticate: async (res, req) => {
+      return authenticateJWT(res, async id => {
+        const user = await conn.knex
+          .select("*")
+          .from("users")
+          .where("id", id)
+          .first();
+        return user as IUser;
+      });
+    }
+  });
+};

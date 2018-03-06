@@ -1,10 +1,11 @@
 import * as request from "supertest";
 
-import { newGraphqlServer } from "../src/server";
+import { appServer, appServerWithDefaults } from "../src/server";
 import { resolvers } from "../src/resolvers";
 import { schema } from "../src/schema";
+import { testDb } from "../src/setupTest";
 
-const app = newGraphqlServer(schema);
+const app = appServerWithDefaults(schema, testDb);
 
 describe("routes : index", () => {
   it("Should get a 404 on invalid page", async () => {
