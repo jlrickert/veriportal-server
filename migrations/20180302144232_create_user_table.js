@@ -17,13 +17,13 @@ exports.up = async (knex, Promise) => {
         .default("false")
         .notNullable();
 
-      t.index("username");
+      t.timestamps(true, true);
     });
   }
 };
 
 exports.down = async (knex, Promise) => {
-  const exists = knex.schema.hasTable("users");
+  const exists = await knex.schema.hasTable("users");
   if (exists) {
     return Promise.all([knex.schema.dropTable("users")]);
   }
