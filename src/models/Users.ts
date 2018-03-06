@@ -1,14 +1,9 @@
-import {
-  SqlConnection,
-  MemConnection,
-  TConnection,
-  matchConnector
-} from "../connector";
+import { SqlConnection, TConnection } from "../connector";
 import { IUser, IAuthPayload } from "../schema/types";
 import * as Auth from "../auth";
 
 export interface IUsers {
-  fetchUser: (id: number) => Promise<IUser>;
+  fetchUserById: (id: number) => Promise<IUser>;
   fetchUsers: () => Promise<IUser[]>;
   signup: (
     params: {
@@ -26,15 +21,15 @@ export class SqlUsers implements IUsers {
     this.conn = conn;
   }
 
-  fetchUser = async (id: number): Promise<IUser> =>
+  fetchUserById = async (id: number): Promise<IUser> =>
     this.conn.knex
       .select("*")
-      .from("User")
+      .from("users")
       .where("id", id)
       .first();
 
   fetchUsers = async (): Promise<IUser[]> =>
-    this.conn.knex.select("*").from("User");
+    this.conn.knex.select("*").from("users");
 
   signup = async (): Promise<IAuthPayload> => Promise.reject("Not implemented");
 }

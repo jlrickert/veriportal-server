@@ -1,24 +1,37 @@
 type Query {
+  """Get the currently logged in user"""
   me: User
+
+  """fetch a user with the given id"""
   user(id: ID!): User
+
+  """fetch users"""
   users: [User]
 }
 
 type Mutation {
+  """
+  Login with username and password. Returns a jwt that may be placed in the
+  Authorization header. Ex. `Authorization: Bearer dsfi324jsonwebtoken234asd`
+  """
   login(username: String!, password: String!): AuthPayload!
+
+  """Get a new jwt for authentication"""
   refreshToken(token: String!): AuthPayload!
+
+  """revokes the user's tokens, effectively logging the user out"""
   revokeToken: Boolean
+
+  """Update the current user password"""
   updatePassword(password: String!): AuthPayload!
 
+  """Creates a new account if username is not taken"""
   signup(
     username: String!
     password: String!
     firstName: String
     lastName: String
   ): AuthPayload
-
-  addBook(title: String!, author: String!): Book
-  deleteBook(id: ID!): Book
 }
 
 type User {
@@ -33,10 +46,4 @@ type AuthPayload {
   user: User!
   token: String!
   refreshToken: String!
-}
-
-type Book {
-  id: ID!
-  title: String
-  author: String
 }

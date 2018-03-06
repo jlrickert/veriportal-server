@@ -4,12 +4,14 @@ import { hashPassword } from "./auth";
 describe("json web token based authentication", () => {
   const user = {
     id: 6,
+    username: "jackrabbit",
     firstName: "Jack",
     lastName: "Rabbit",
     admin: false
   };
+
   const jwtString =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiZmlyc3ROYW1lIjoiSmFjayIsImxhc3ROYW1lIjoiUmFiYml0IiwiYWRtaW4iOmZhbHNlfQ.uOqL-2uiscCfqHLYHPximLsXhA3i4gOKdOCrf1F-Ihg";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwidXNlcm5hbWUiOiJqYWNrcmFiYml0IiwiZmlyc3ROYW1lIjoiSmFjayIsImxhc3ROYW1lIjoiUmFiYml0IiwiYWRtaW4iOmZhbHNlfQ.k606TSLMHeKSjolgpEInO_ORPvISY8qPCujL3GynZpo";
   it("should be able to issue a jwt for a user", () => {
     const token = auth.issueJWT(user, { expiresIn: 0, noTimestamp: true });
     expect(token).toEqual(jwtString);

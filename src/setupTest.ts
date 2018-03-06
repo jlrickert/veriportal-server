@@ -1,20 +1,24 @@
-import { graphql } from "graphql";
+import { graphql, ExecutionResult } from "graphql";
 
 import { SqlConnection } from "./connector";
 import * as Config from "./config";
 import { SqlUsers } from "./models";
+import { IUser, ISchemaContext } from "./schema/types";
 
 export const testDb = new SqlConnection(Config.knexConfig);
+export const Users = new SqlUsers(testDb);
 
-export const gql = (schema, source) =>
-  graphql({
+export const gql = (
+  schema,
+  source,
+  ctx?: ISchemaContext
+): Promise<ExecutionResult> => {
+  return graphql({
     schema,
     source,
-    contextValue: {
-      user: "user",
-      Users: new SqlUsers(testDb)
-    }
+    contextValue: ctx
   });
+};
 
 beforeAll(async () => {
   await testDb.migrate();

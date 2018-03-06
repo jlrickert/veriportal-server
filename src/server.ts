@@ -6,7 +6,7 @@ import { graphqlExpress, graphiqlExpress } from "apollo-server-express";
 
 import { authenticateJWT } from "./auth";
 import * as config from "./config";
-import { IUser } from "./schema/types";
+import { IUser, ISchemaContext } from "./schema/types";
 import { TConnection } from "./connector";
 import { SqlUsers, IUsers } from "./models/Users";
 
@@ -28,7 +28,7 @@ export const appServer = (
   const Users_: IUsers = new SqlUsers(opts.connector);
 
   const getAuthenticatedUser = async (id: number): Promise<IUser> =>
-    await Users_.fetchUser(id);
+    await Users_.fetchUserById(id);
 
   const endpoint = app.use(
     config.endpoint,
@@ -38,7 +38,7 @@ export const appServer = (
       context: {
         user: opts.authenticate(req, res, getAuthenticatedUser),
         Users: Users_
-      }
+      } as ISchemaContext
     }))
   );
 

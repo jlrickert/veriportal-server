@@ -1,7 +1,7 @@
 import * as request from "supertest";
 
 import { appServer, appServerWithDefaults } from "../src/server";
-import { resolvers } from "../src/resolvers";
+import { rootResolver } from "../src/resolvers";
 import { schema } from "../src/schema";
 import { testDb } from "../src/setupTest";
 
