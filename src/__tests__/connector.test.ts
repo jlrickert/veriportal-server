@@ -1,6 +1,6 @@
-import * as Config from "./config";
-import { testDb } from "./setupTest";
-import { SqlConnectionOptions } from "./connector";
+import * as Config from "../config";
+import { testDb } from "../setupTest";
+import { SqlConnectionOptions } from "../connector";
 
 describe("SqlConnector", () => {
   const tables = testDb.knex

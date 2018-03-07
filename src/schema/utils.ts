@@ -5,8 +5,14 @@ import { addMockFunctionsToSchema, makeExecutableSchema } from "graphql-tools";
 export const readGraphQLFile = (graphqlFile): string =>
   fs.readFileSync(`${__dirname}/${graphqlFile}`).toString();
 
-export const buildSchema = (typeDefs, resolvers): GraphQLSchema => {
-  const schema = makeExecutableSchema({ typeDefs, resolvers });
+export const buildSchema = (args: {
+  typeDefs: string;
+  resolvers: any;
+}): GraphQLSchema => {
+  const schema = makeExecutableSchema({
+    typeDefs: args.typeDefs,
+    resolvers: args.resolvers
+  });
   addMockFunctionsToSchema({ schema, mocks: {}, preserveResolvers: true });
   return schema;
 };

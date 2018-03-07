@@ -1,5 +1,4 @@
-import * as auth from "./auth";
-import { hashPassword } from "./auth";
+import * as auth from "../auth";
 
 describe("json web token based authentication", () => {
   const user = {

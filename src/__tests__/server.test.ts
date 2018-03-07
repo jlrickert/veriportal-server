@@ -1,9 +1,9 @@
 import * as request from "supertest";
 
-import { appServer, appServerWithDefaults } from "../src/server";
-import { rootResolver } from "../src/resolvers";
-import { schema } from "../src/schema";
-import { testDb } from "../src/setupTest";
+import { appServer, appServerWithDefaults } from "../server";
+import { rootResolver } from "../resolvers";
+import { schema } from "../schema";
+import { testDb } from "../setupTest";
 
 const app = appServerWithDefaults(schema, testDb);
 

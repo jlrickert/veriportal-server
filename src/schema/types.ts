@@ -1,8 +1,8 @@
 import { IUsers } from "../models";
 
 export interface ISchemaContext {
-  user: Promise<IUser>;
-  Users: IUsers;
+  user?: Promise<IUser>;
+  Users?: IUsers;
 }
 
 export interface IGraphQLType {
