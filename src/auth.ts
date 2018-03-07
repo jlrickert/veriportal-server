@@ -38,15 +38,21 @@ export const issueJWT = (user: IUser, options?: SignOptions): string => {
   return jwt.sign(user, config.secretKey, options);
 };
 
-export const verifyToken = (token: string): IUser =>
-  jwt.verify(token, config.secretKey) as IUser;
+export const verifyToken = (token: string): IUser => {
+  return jwt.verify(token, config.secretKey) as IUser;
+};
 
 export const comparePasswords = async (
   password: string,
   hash: string
-): Promise<boolean> => await bcrypt.compare(password, hash);
+): Promise<boolean> => {
+  return await bcrypt.compare(password, hash);
+};
 
-export const hashPassword = async (password: string): Promise<string> =>
-  bcrypt.hash(password, 10);
+export const hashPassword = async (password: string): Promise<string> => {
+  return bcrypt.hash(password, 10);
+};
 
-export const newRefreshToken = (): string => randToken.uid(255);
+export const newRefreshToken = (): string => {
+  return randToken.uid(255);
+};

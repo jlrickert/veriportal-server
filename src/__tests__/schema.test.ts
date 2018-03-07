@@ -17,11 +17,10 @@ describe("Graphql schema", () => {
     });
 
     const user = { id: 1, username: "jlrickert", admin: false };
-    const query = `query { me { id username } }`;
+    const query = `query { me { username admin } }`;
     const res = await gql(schema, query, { user: Promise.resolve(user) });
     const me = res.data.me;
-    expect(me.id).toEqual("1");
-    expect(me).toContain("username");
-    expect(me).toContain("admin");
+    expect(me.username).toEqual(user.username);
+    expect(me.admin).toEqual(user.admin);
   });
 });

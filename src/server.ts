@@ -6,9 +6,9 @@ import { graphqlExpress, graphiqlExpress } from "apollo-server-express";
 
 import { authenticateJWT } from "./auth";
 import * as config from "./config";
-import { IUser, ISchemaContext } from "./schema/types";
+import { IUser, ISchemaContext } from "./schema";
 import { TConnection } from "./connector";
-import { SqlUsers, IUsers } from "./models/Users";
+import { SqlUsers, IUsers } from "./models";
 
 export type IGraphqlServerOptions = {
   connector: TConnection;
@@ -50,13 +50,13 @@ export const appServer = (
 };
 
 export const appServerWithDefaults = (
-  schema,
+  schema: GraphQLSchema,
   conn: TConnection
 ): express.Express => {
   return appServer(schema, {
     connector: conn,
-    authenticate: async (res, req) => {
-      return authenticateJWT(res, async id => {
+    authenticate: async (req, res) => {
+      return authenticateJWT(req, async id => {
         const user = await conn.knex
           .select("*")
           .from("users")

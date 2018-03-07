@@ -5,11 +5,11 @@ export interface ISchemaContext {
   Users?: IUsers;
 }
 
-export interface IGraphQLType {
+export interface ISchemaType {
   [name: string]: any;
 }
 
-export interface IUser extends IGraphQLType {
+export interface IUser extends ISchemaType {
   id: number;
   username: string;
   firstName?: string;
@@ -17,8 +17,15 @@ export interface IUser extends IGraphQLType {
   admin: boolean;
 }
 
-export interface IAuthPayload extends IGraphQLType {
+export interface IAuthPayload extends ISchemaType {
   user: IUser;
   token: string;
   refreshToken: string;
+}
+
+export interface ISignupInput {
+  username: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
 }

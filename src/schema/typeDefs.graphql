@@ -6,7 +6,7 @@ type Query {
   user(id: ID!): User
 
   """fetch users"""
-  users: [User]
+  users: [User!]
 }
 
 type Mutation {
@@ -20,30 +20,31 @@ type Mutation {
   refreshToken(token: String!): AuthPayload!
 
   """revokes the user's tokens, effectively logging the user out"""
-  revokeToken: Boolean
+  revokeToken: User
 
   """Update the current user password"""
   updatePassword(password: String!): AuthPayload!
 
   """Creates a new account if username is not taken"""
-  signup(
-    username: String!
-    password: String!
-    firstName: String
-    lastName: String
-  ): AuthPayload
+  signup(params: SignupInput): AuthPayload!
 }
 
 type User {
-  id: ID!
-  username: String!
+  username: ID!
   firstName: String
   lastName: String
-  admin: Boolean
+  admin: Boolean!
 }
 
 type AuthPayload {
   user: User!
   token: String!
   refreshToken: String!
+}
+
+input SignupInput {
+  username: String!
+  password: String!
+  firstName: String
+  lastName: String
 }
