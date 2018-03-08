@@ -15,7 +15,7 @@ exports.up = async (knex, Promise) => {
 
       t.string("refresh_token").unique();
 
-      t.string("passwordHash");
+      t.string("hash");
     });
   }
 };

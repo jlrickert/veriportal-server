@@ -10,15 +10,17 @@ describe("json web token based authentication", () => {
   };
 
   const jwtString =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwidXNlcm5hbWUiOiJqYWNrcmFiYml0IiwiZmlyc3ROYW1lIjoiSmFjayIsImxhc3ROYW1lIjoiUmFiYml0IiwiYWRtaW4iOmZhbHNlfQ.k606TSLMHeKSjolgpEInO_ORPvISY8qPCujL3GynZpo";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImphY2tyYWJiaXQiLCJhZG1pbiI6ZmFsc2V9.48rXUG3XSffuXtNg3-AjTcJoi3Dx-IKCZsAGAP0MO7U";
   it("should be able to issue a jwt for a user", () => {
     const token = auth.issueJWT(user, { expiresIn: 0, noTimestamp: true });
     expect(token).toEqual(jwtString);
   });
 
+  it("should be able to create a token", () => {});
+
   it("should be able verify a token", () => {
     const payload = auth.verifyToken(jwtString);
-    expect(payload).toEqual(user);
+    expect(payload).toEqual({ username: user.username, admin: user.admin });
   });
 
   it("should be able to generate a unique refresh token", () => {

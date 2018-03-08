@@ -18,7 +18,6 @@ export class SqlConnection {
    */
   seed = async (): Promise<void> => {
     await this.knex.seed.run();
-    console.log("Seeded database");
   };
 
   /**
@@ -26,7 +25,6 @@ export class SqlConnection {
    */
   migrate = async (): Promise<void> => {
     await this.knex.migrate.latest();
-    console.log("Migrate database");
   };
 
   /**
@@ -41,6 +39,5 @@ export class SqlConnection {
    */
   rollback = async (): Promise<void> => {
     await this.knex.migrate.rollback();
-    console.log("Rollded back database");
   };
 }

@@ -10,11 +10,11 @@ export interface ISchemaType {
 }
 
 export interface IUser extends ISchemaType {
-  id: number;
+  id?: number;
   username: string;
   firstName?: string;
   lastName?: string;
-  admin: boolean;
+  admin?: boolean;
 }
 
 export interface IAuthPayload extends ISchemaType {

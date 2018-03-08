@@ -30,12 +30,20 @@ export const authenticateJWT = async (
 };
 
 export const issueJWT = (user: IUser, options?: SignOptions): string => {
-  if (options.expiresIn === 0) {
+  if (options && options.expiresIn === 0) {
     delete options.expiresIn;
   } else {
     options = merge({ expiresIn: "15m" }, options);
   }
-  return jwt.sign(user, config.secretKey, options);
+  try {
+    return jwt.sign(
+      { username: user.username, admin: user.admin },
+      config.secretKey,
+      options
+    );
+  } catch (err) {
+    throw new Error(`Unable to issue token for ${user}: ${err}`);
+  }
 };
 
 export const verifyToken = (token: string): IUser => {

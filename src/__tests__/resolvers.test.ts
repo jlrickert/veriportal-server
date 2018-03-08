@@ -1,20 +1,32 @@
-import { rootResolver } from "./index";
+import { rootResolver } from "../resolvers";
 import { gql, Users, testDb } from "../setupTest";
-import { schema } from "../schema";
+import { schema, ISchemaContext } from "../schema";
 
 describe("User resolver", () => {
+  const context = {
+    Users: Users
+  } as ISchemaContext;
   it("should be able to fetch current user info", async () => {
-    const query = `query { me { username } }`;
-    const context = {
-      user: await Users.fetchUserById(1)
-    };
-    const res = await gql(schema, query, context);
-    expect(res).toContain(context.user);
+    const user = Promise.resolve({
+      id: 5,
+      username: "jlrickert",
+      firstName: "Jared",
+      lastName: "Rickert",
+      admin: true
+    });
+
+    const res = await rootResolver.Query.me(
+      {},
+      {},
+      {
+        user
+      }
+    );
+    expect(res).toEqual(await user);
   });
 
   it("should not fetch a user if not authenticated", async () => {
-    const query = `query { me { username } }`;
-    const res = await gql(schema, query);
+    const res = await rootResolver.Query.me({}, {}, {});
     expect(res).toContain("fasdf");
   });
 
@@ -35,6 +47,7 @@ describe("User resolver", () => {
     const res = await gql(schema, query);
     const dataStr = JSON.stringify(res);
     expect(res).toHaveProperty("data");
+    expect(res.data.length).toBeGreaterThan(0);
     ["id", "username", "firstName", "lastName", "admin"].forEach(column => {
       expect(dataStr).toContain(column);
     });

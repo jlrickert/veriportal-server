@@ -2,11 +2,11 @@ import { graphql, ExecutionResult } from "graphql";
 
 import { SqlConnection } from "./connector";
 import * as Config from "./config";
-import { SqlUsers } from "./models";
+import { SqlUsers, IUsers } from "./models";
 import { IUser, ISchemaContext } from "./schema/types";
 
-export const testDb = new SqlConnection(Config.knexConfig);
-export const Users = new SqlUsers(testDb);
+export let testDb: SqlConnection;
+export let Users: IUsers;
 
 export const gql = (
   schema,
@@ -21,6 +21,8 @@ export const gql = (
 };
 
 beforeAll(async () => {
+  testDb = new SqlConnection(Config.knexConfig);
+  Users = new SqlUsers(testDb);
   await testDb.migrate();
   await testDb.seed();
 });
