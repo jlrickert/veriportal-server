@@ -5,7 +5,7 @@ exports.up = async (knex, Promise) => {
       t.increments("id").primary();
 
       t
-        .integer("user_id")
+        .integer("userId")
         .unsigned()
         .unique()
         .notNullable()
@@ -13,9 +13,11 @@ exports.up = async (knex, Promise) => {
         .onDelete("CASCADE")
         .onUpdate("CASCADE");
 
-      t.string("refresh_token").unique();
+      t.string("refreshToken").unique();
 
       t.string("hash");
+
+      t.timestamps(true, true);
     });
   }
 };

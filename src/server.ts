@@ -15,7 +15,7 @@ export type IGraphqlServerOptions = {
   authenticate: (
     req: express.Request,
     res: express.Response,
-    findUser: (id: number) => Promise<IUser>
+    findUser: (username: string) => Promise<IUser>
   ) => Promise<IUser>;
 };
 
@@ -27,16 +27,13 @@ export const appServer = (
 
   const Users_: IUsers = new SqlUsers(opts.connector);
 
-  const getAuthenticatedUser = async (id: number): Promise<IUser> =>
-    await Users_.fetchUserById(id);
-
   const endpoint = app.use(
     config.endpoint,
     bodyParser.json(),
     graphqlExpress((req, res) => ({
       schema,
       context: {
-        user: opts.authenticate(req, res, getAuthenticatedUser),
+        user: opts.authenticate(req, res, Users_.fetchUserByUsername),
         Users: Users_
       } as ISchemaContext
     }))
@@ -56,11 +53,11 @@ export const appServerWithDefaults = (
   return appServer(schema, {
     connector: conn,
     authenticate: async (req, res) => {
-      return authenticateJWT(req, async id => {
+      return authenticateJWT(req, async username => {
         const user = await conn.knex
           .select("*")
           .from("users")
-          .where("id", id)
+          .where("username", username)
           .first();
         return user as IUser;
       });

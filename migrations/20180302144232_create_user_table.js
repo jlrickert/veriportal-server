@@ -9,8 +9,8 @@ exports.up = async (knex, Promise) => {
         .unique()
         .notNullable();
 
-      t.string("first_name");
-      t.string("last_name");
+      t.string("firstName");
+      t.string("lastName");
 
       t
         .boolean("admin")

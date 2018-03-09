@@ -9,6 +9,7 @@ import {
   comparePasswords
 } from "../auth";
 import { Promise } from "bluebird";
+import { error } from "util";
 
 export interface IUsers {
   fetchUserById: (id: number) => Promise<IUser>;
@@ -18,7 +19,7 @@ export interface IUsers {
   login: (username: string, password: string) => Promise<IAuthPayload>;
   refreshToken: (token: string) => Promise<IAuthPayload>;
   revokeTokens: (user: IUser) => Promise<IUser>;
-  updatePassword: (user: IUser, password: string) => Promise<IAuthPayload>;
+  updatePassword: (user: IUser, password: string) => Promise<IUser>;
 }
 
 export class SqlUsers implements IUsers {
@@ -30,7 +31,7 @@ export class SqlUsers implements IUsers {
   async fetchUserById(id: number): Promise<IUser> {
     return this.conn
       .knex("users")
-      .join("auth", "users.id", "auth.user_id")
+      .join("auth", "users.id", "auth.userId")
       .select("*")
       .where("users.id", id)
       .first();
@@ -38,7 +39,7 @@ export class SqlUsers implements IUsers {
 
   async fetchUserByUsername(username: string): Promise<IUser> {
     return this.conn.knex
-      .join("auth", "auth.user_id", "users.id")
+      .join("auth", "auth.userId", "users.id")
       .select("*")
       .from("users")
       .where("username", username)
@@ -50,127 +51,96 @@ export class SqlUsers implements IUsers {
   }
 
   async signup(params: ISignupInput): Promise<IAuthPayload> {
-    return this.conn.knex
-      .transaction(async trx => {
-        const data = {
-          username: params.username,
-          first_name: params.firstName,
-          last_name: params.lastName,
-          admin: false
-        };
-        const res = await trx.insert(data, ["id"]).into("users");
-        const userId = res[0].id;
+    const refreshToken = newRefreshToken();
+    const token = issueJWT({ username: params.username, admin: false });
+    const hash = await hashPassword(params.password);
 
-        const refreshToken = newRefreshToken();
-        const token = issueJWT({ username: params.username, admin: false });
-        const hash = await hashPassword(params.password);
+    const data = merge({ admin: false }, params);
+    delete data["password"];
 
-        await trx
-          .insert({
-            user_id: userId,
-            hash,
-            refresh_token: refreshToken
-          })
-          .into("auth");
-
-        return Promise.resolve({
-          user: {
-            id: userId,
-            username: params.username,
-            firstName: params.firstName,
-            lastName: params.lastName,
-            admin: false
-          },
-          refreshToken,
-          token
+    const userId = await this.conn.knex.transaction(async trx => {
+      const userId = await trx("users")
+        .insert(data, "id")
+        .then(res => Promise.resolve(res[0]))
+        .catch(err => {
+          if (err.constraint === "users_username_unique") {
+            return Promise.reject(`User ${params.username} already exists`);
+          } else {
+            console.error(err);
+            return Promise.reject("Server error");
+          }
         });
-      })
-      .catch(err => {
-        if (err.constraint === "users_username_unique") {
-          return Promise.reject(
-            `Unable to signup: ${params.username} already exists`
-          );
-        }
-        return Promise.reject(err);
-      });
+
+      await trx("auth").insert({ userId, hash, refreshToken });
+      return Promise.resolve(userId);
+    });
+
+    const user = await this.fetchUserById(userId);
+    return Promise.resolve({ user, refreshToken, token });
   }
 
   async login(username: string, password: string): Promise<IAuthPayload> {
-    const user = await this.conn
-      .knex("users")
-      .select("*")
-      .where("username", username)
-      .join("auth", "users.id", "auth.user_id")
-      .first();
+    const user = await this.fetchUserByUsername(username);
 
-    if (comparePasswords(password, user.hash)) {
-      const refreshToken = newRefreshToken();
-      await this.conn
-        .knex("auth")
-        .update("refresh_token", refreshToken)
-        .where("user_id", user.id);
-
-      return Promise.resolve({
-        user: {
-          id: user.id,
-          username: user.username,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          admin: user.admin
-        },
-        token: issueJWT(user),
-        refreshToken
-      });
-    } else {
-      Promise.reject("Incorrect username or password");
+    if (!await comparePasswords(password, user.hash)) {
+      return Promise.reject("Incorrect username or password");
     }
+
+    const refreshToken = newRefreshToken();
+    await this.conn
+      .knex("auth")
+      .where("userId", user.id)
+      .update({ refreshToken });
+
+    return Promise.resolve({
+      user: merge({ refreshToken }, user),
+      token: issueJWT(user),
+      refreshToken
+    });
   }
 
   async refreshToken(token: string): Promise<IAuthPayload> {
-    const user = await this.conn
+    const newToken = newRefreshToken();
+    const authInfo = await this.conn
       .knex("auth")
-      .select()
-      .where("refresh_token", token)
-      .join("users", "users.id", "auth.user_id")
-      .first();
+      .where("refreshToken", "=", token)
+      .update("refreshToken", newToken, ["userId"]);
 
-    if (user) {
-      return Promise.resolve({
-        user: {
-          id: user.id,
-          username: user.username,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          admin: user.admin
-        },
-        token: issueJWT({ username: user.username, admin: user.admin }),
-        refreshToken: user.refresh_token
-      });
-    } else {
+    if (authInfo.length === 0) {
       return Promise.reject("Invalid token");
     }
+
+    const user = await this.fetchUserById(authInfo[0].userId);
+    return {
+      user,
+      refreshToken: user.refreshToken,
+      token: issueJWT({ username: user.username, admin: user.admin })
+    };
+  }
+
+  private async updateRefreshToken(id: number): Promise<IUser> {
+    await this.conn
+      .knex("auth")
+      .where("userId", id)
+      .update({ refreshToken: newRefreshToken() }, ["*"]);
+    return this.fetchUserById(id);
   }
 
   async revokeTokens(user: IUser): Promise<IUser> {
     await this.conn
       .knex("auth")
-      .update("refresh_token", null)
-      .where("user_id", user.id);
+      .where("userId", user.id)
+      .update("refreshToken", null);
     return this.fetchUserByUsername(user.username);
   }
 
-  async updatePassword(user: IUser, password: string): Promise<IAuthPayload> {
+  async updatePassword(user: IUser, password: string): Promise<IUser> {
     const hash = await hashPassword(password);
-    this.conn.knex("auth").update("hash", hash);
-    return Promise.resolve({
-      user: merge(
-        {
-          user: user
-        },
-        { hash }
-      ),
-      refreshToken: user.refreshToken,
-      token: issueJWT(user)
-    });
+    await this.conn
+      .knex("auth")
+      .where("userId", user.id)
+      .update({ hash });
+
+    return Promise.resolve(merge(user, { hash }));
   }
 }

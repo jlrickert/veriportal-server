@@ -1,23 +1,29 @@
 import { merge } from "lodash";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
-import { SignOptions } from "jsonwebtoken";
+import { SignOptions as ISignOptions } from "jsonwebtoken";
 import { Request } from "express";
 import * as randToken from "rand-token";
 
 import * as config from "./config";
 import { IUser } from "./schema/types";
+import { IUsers } from "./models";
 
-export const authenticateJWT = async (
+export interface IJWTPayload {
+  username: string;
+  admin: boolean;
+}
+
+export async function authenticateJWT(
   req: Request,
-  findUser: (id: number) => Promise<IUser>
-): Promise<IUser | null> => {
+  findUser: (username: string) => Promise<IUser>
+): Promise<IUser | null> {
   const header = req.headers.authorization || null;
   if (header) {
     const token = header.toString().replace("Bearer ", "");
     try {
-      const { id } = jwt.verify(token, config.secretKey) as IUser;
-      return await findUser(id);
+      const { username } = verifyToken(token);
+      return await findUser(username);
     } catch (err) {
       if (err instanceof jwt.JsonWebTokenError) {
         return null;
@@ -27,9 +33,12 @@ export const authenticateJWT = async (
   }
 
   return null;
-};
+}
 
-export const issueJWT = (user: IUser, options?: SignOptions): string => {
+export function issueJWT(
+  params: { username: string; admin: boolean },
+  options?: ISignOptions
+): string {
   if (options && options.expiresIn === 0) {
     delete options.expiresIn;
   } else {
@@ -37,30 +46,30 @@ export const issueJWT = (user: IUser, options?: SignOptions): string => {
   }
   try {
     return jwt.sign(
-      { username: user.username, admin: user.admin },
+      { username: params.username, admin: params.admin },
       config.secretKey,
       options
     );
   } catch (err) {
-    throw new Error(`Unable to issue token for ${user}: ${err}`);
+    throw new Error(`Unable to issue token for ${params.username}: ${err}`);
   }
-};
+}
 
-export const verifyToken = (token: string): IUser => {
-  return jwt.verify(token, config.secretKey) as IUser;
-};
+export function verifyToken(token: string): IJWTPayload {
+  return jwt.verify(token, config.secretKey) as IJWTPayload;
+}
 
-export const comparePasswords = async (
+export async function comparePasswords(
   password: string,
   hash: string
-): Promise<boolean> => {
+): Promise<boolean> {
   return await bcrypt.compare(password, hash);
-};
+}
 
-export const hashPassword = async (password: string): Promise<string> => {
+export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
-};
+}
 
-export const newRefreshToken = (): string => {
+export function newRefreshToken(): string {
   return randToken.uid(255);
-};
+}

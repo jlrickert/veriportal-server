@@ -49,4 +49,10 @@ describe("Hashing functions", () => {
     const result = await auth.comparePasswords(password, hash);
     expect(result).toBeTruthy();
   });
+
+  it("should not verify non matching passwords", async () => {
+    const hash = await hashPromise;
+    const result = await auth.comparePasswords("mojojojo", hash);
+    expect(result).toBeFalsy();
+  });
 });

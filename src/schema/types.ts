@@ -9,12 +9,28 @@ export interface ISchemaType {
   [name: string]: any;
 }
 
+export class GraphqlModel {
+  schema: string[] = [];
+  toObject(): Object {
+    let data;
+    this.schema.forEach(item => {
+      data["item"] = this["item"];
+    });
+    return data;
+  }
+}
+
 export interface IUser extends ISchemaType {
-  id?: number;
+  id: number;
   username: string;
   firstName?: string;
   lastName?: string;
-  admin?: boolean;
+  admin: boolean;
+
+  refreshToken?: string;
+  hash?: string;
+  created_at?: any;
+  updated_at?: any;
 }
 
 export interface IAuthPayload extends ISchemaType {
