@@ -5,20 +5,27 @@ import * as Config from "./config";
 import { SqlUsers, IUsers } from "./models";
 import { IUser, ISchemaContext } from "./schema/types";
 
+export interface IgqlContextArgs {
+  query: string;
+  root?: any;
+  user?: Promise<IUser>;
+  variables?: { [key: string]: any };
+}
+
+export const gqlContext = (
+  schema
+): ((args: IgqlContextArgs) => Promise<ExecutionResult>) => {
+  return args =>
+    graphql({
+      schema,
+      source: args.query,
+      contextValue: { user: args.user || Promise.resolve(null), Users },
+      variableValues: args.variables
+    });
+};
+
 export let testDb: SqlConnection;
 export let Users: IUsers;
-
-export const gql = (
-  schema,
-  source,
-  ctx?: ISchemaContext
-): Promise<ExecutionResult> => {
-  return graphql({
-    schema,
-    source,
-    contextValue: ctx
-  });
-};
 
 beforeAll(async () => {
   testDb = new SqlConnection(Config.knexConfig);

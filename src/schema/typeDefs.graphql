@@ -1,9 +1,9 @@
 type Query {
   """Get the currently logged in user"""
-  me: User
+  me: User!
 
   """fetch a user with the given id"""
-  user(id: ID!): User
+  user(username: ID!): User!
 
   """fetch users"""
   users: [User!]

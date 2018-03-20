@@ -9,8 +9,10 @@ import * as config from "./config";
 import { IUser, ISchemaContext } from "./schema";
 import { TConnection } from "./connector";
 import { SqlUsers, IUsers } from "./models";
+import { isProduction } from "./config";
 
 export type IGraphqlServerOptions = {
+  debug?: boolean;
   connector: TConnection;
   authenticate: (
     req: express.Request,
@@ -32,6 +34,7 @@ export const appServer = (
     bodyParser.json(),
     graphqlExpress((req, res) => ({
       schema,
+      debug: opts.debug,
       context: {
         user: opts.authenticate(req, res, Users_.fetchUserByUsername),
         Users: Users_
@@ -39,7 +42,7 @@ export const appServer = (
     }))
   );
 
-  if (!config.isProduction) {
+  if (!isProduction) {
     app.use("/graphiql", graphiqlExpress({ endpointURL: config.endpoint }));
   }
 
@@ -51,6 +54,7 @@ export const appServerWithDefaults = (
   conn: TConnection
 ): express.Express => {
   return appServer(schema, {
+    debug: !isProduction,
     connector: conn,
     authenticate: async (req, res) => {
       return authenticateJWT(req, async username => {

@@ -1,6 +1,6 @@
 import { graphql } from "graphql";
 
-import { gql, Users, testDb } from "../setupTest";
+import { gqlContext, Users, testDb } from "../setupTest";
 import { buildSchema, typeDefs, ISchemaContext, IUser } from "../schema";
 
 describe("Graphql schema", () => {
@@ -18,7 +18,8 @@ describe("Graphql schema", () => {
 
     const user = { id: 1, username: "jlrickert", admin: false };
     const query = `query { me { username admin } }`;
-    const res = await gql(schema, query, { user: Promise.resolve(user) });
+    const gql = gqlContext(schema);
+    const res = await gql({ query, user: Promise.resolve(user) });
     const me = res.data.me;
     expect(me.username).toEqual(user.username);
     expect(me.admin).toEqual(user.admin);

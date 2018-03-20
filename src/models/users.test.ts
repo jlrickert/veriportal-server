@@ -89,11 +89,11 @@ describe("Users authentication", () => {
   });
 
   it("should be able to update a users password", async () => {
-    let user = await Users.fetchUserByUsername("cjacky");
+    const user = await Users.fetchUserByUsername("cjacky");
     const oldHash = user.hash;
-    user = await Users.updatePassword(user, "shoo");
+    const payload = await Users.updatePassword(user, "shoo");
 
-    expect(user.hash).not.toEqual(oldHash);
-    expect(user.hash.length).toBeGreaterThan(0);
+    expect(payload.user.hash).not.toEqual(oldHash);
+    expect(payload.user.hash.length).toBeGreaterThan(0);
   });
 });

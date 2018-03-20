@@ -19,7 +19,7 @@ export interface IUsers {
   login: (username: string, password: string) => Promise<IAuthPayload>;
   refreshToken: (token: string) => Promise<IAuthPayload>;
   revokeTokens: (user: IUser) => Promise<IUser>;
-  updatePassword: (user: IUser, password: string) => Promise<IUser>;
+  updatePassword: (user: IUser, password: string) => Promise<IAuthPayload>;
 }
 
 export class SqlUsers implements IUsers {
@@ -86,7 +86,7 @@ export class SqlUsers implements IUsers {
       return Promise.reject("Incorrect username or password");
     }
 
-    const refreshToken = newRefreshToken();
+    const refreshToken = user.refreshToken || newRefreshToken();
     await this.conn
       .knex("auth")
       .where("userId", user.id)
@@ -134,13 +134,19 @@ export class SqlUsers implements IUsers {
     return this.fetchUserByUsername(user.username);
   }
 
-  async updatePassword(user: IUser, password: string): Promise<IUser> {
+  async updatePassword(user: IUser, password: string): Promise<IAuthPayload> {
     const hash = await hashPassword(password);
     await this.conn
       .knex("auth")
       .where("userId", user.id)
       .update({ hash });
 
-    return Promise.resolve(merge(user, { hash }));
+    const user_ = await this.updateRefreshToken(user.id);
+    const token = issueJWT({ username: user.username, admin: user.admin });
+    return Promise.resolve({
+      user: user_,
+      refreshToken: user_.refreshToken,
+      token
+    });
   }
 }
