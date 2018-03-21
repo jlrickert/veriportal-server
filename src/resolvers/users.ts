@@ -1,60 +1,98 @@
-import { IUser, IContext, IAuthPayload, ISignupInput } from "../schema";
+import { User, sql, ISqlUser } from "../coreSql";
+import {
+  ISchemaUser,
+  IContext,
+  ISchemaAuthPayload,
+  ISchemaSignupInput
+} from "../schema";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Query
 ////////////////////////////////////////////////////////////////////////////////
-export async function me(root, params, ctx: IContext): Promise<IUser> {
-  return ctx.user;
+export async function me(
+  root: any,
+  params: {},
+  ctx: IContext
+): Promise<ISchemaUser> {
+  return ctx.user.then(user => user.toGqlSchema());
 }
 
-export async function user(root, { id }, ctx: IContext): Promise<IUser> {
-  return ctx.Users.fetchUserById(id);
+export async function user(
+  root: any,
+  { id }: { id: number },
+  ctx: IContext
+): Promise<ISchemaUser> {
+  return User.fromId(id).then(user => user.toGqlSchema());
 }
 
-export async function users(root, params, ctx: IContext): Promise<IUser[]> {
-  return ctx.Users.fetchUsers();
+export async function users(
+  root: any,
+  params: {},
+  ctx: IContext
+): Promise<ISchemaUser[]> {
+  const query = sql("users")
+    .select("*")
+    .join("auth", "users.id", "auth.userId");
+
+  return query.then(res => {
+    const users: Promise<ISchemaUser>[] = res.map((userData: ISqlUser) =>
+      new User(userData).toGqlSchema()
+    );
+    return Promise.all(users);
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Mutation
 ////////////////////////////////////////////////////////////////////////////////
 export async function login(
-  root,
-  { username, password },
+  root: any,
+  { username, password }: { username: string; password: string },
   ctx: IContext
-): Promise<IAuthPayload> {
-  return ctx.Users.login(username, password);
+): Promise<ISchemaAuthPayload> {
+  return User.login(username, password).then(createIAuthPayload);
 }
 
 export async function signup(
-  root,
-  { params },
+  root: any,
+  params: ISchemaSignupInput,
   ctx: IContext
-): Promise<IAuthPayload> {
-  return ctx.Users.signup(params);
+): Promise<ISchemaAuthPayload> {
+  return User.signup(params).then(createIAuthPayload);
 }
 
 export async function refreshToken(
-  root,
-  { token },
+  root: any,
+  { token }: { token: string },
   ctx: IContext
-): Promise<IAuthPayload> {
-  return ctx.Users.refreshToken(token);
+): Promise<ISchemaAuthPayload> {
+  return User.fromToken(token).then(createIAuthPayload);
 }
 
-export async function revokeToken(root, params, ctx: IContext): Promise<IUser> {
-  if (!await ctx.user) {
-    return ctx.Users.revokeTokens(await ctx.user);
-  }
+export async function revokeToken(
+  root: any,
+  params: any,
+  ctx: IContext
+): Promise<ISchemaUser> {
+  return ctx.user
+    .then(user => user.revokeToken())
+    .then(user => user.toGqlSchema());
 }
 
 export async function updatePassword(
-  root,
-  { password },
+  root: any,
+  { password }: { password: string },
   ctx: IContext
-): Promise<IAuthPayload> {
-  if (!ctx.user) {
-    throw new Error("Not authorized to change password");
-  }
-  return ctx.Users.updatePassword(await ctx.user, password);
+): Promise<ISchemaAuthPayload> {
+  return ctx.user
+    .then(user => user.updatePassword(password))
+    .then(createIAuthPayload);
+}
+
+async function createIAuthPayload(user: User): Promise<ISchemaAuthPayload> {
+  return Promise.resolve({
+    user: await user.toGqlSchema(),
+    token: user.token,
+    refreshToken: await user.getData("refreshToken")
+  });
 }

@@ -18,8 +18,8 @@ export interface ISqlUser {
   admin: boolean;
   created_at?: string;
   updated_at?: string;
-  hash?: string;
-  refreshToken?: string;
+  hash: string;
+  refreshToken: string;
   [key: string]: any;
 }
 

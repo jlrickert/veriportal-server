@@ -6,7 +6,11 @@
     "lib": ["ES5", "ES6", "ES7", "ESNext"],
     "moduleResolution": "node",
     "sourceMap": true,
-    "allowJs": true
+    "allowJs": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": true,
+    "noFallthroughCasesInSwitch": true
   },
   "exclude": [
     "node_modules",

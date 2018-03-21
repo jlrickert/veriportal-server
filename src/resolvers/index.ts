@@ -1,7 +1,12 @@
-import { IUser, IContext, IAuthPayload, ISignupInput } from "../schema";
+import {
+  ISchemaUser,
+  IContext,
+  ISchemaAuthPayload,
+  ISchemaSignupInput
+} from "../schema";
 import * as UserResolver from "./users";
 
-export type Resolver<T> = (
+export type Resolver<T, P = {}> = (
   root: any,
   params: any,
   ctx: IContext,
@@ -21,7 +26,7 @@ export function mustBeAuthenticated<T>(resolver: Resolver<T>): Resolver<T> {
 export function mustBeAdmin<T>(resolver: Resolver<T>): Resolver<T> {
   return async (root, params, ctx, next) => {
     const user = await ctx.user;
-    if (user!.admin) {
+    if (user!.getData("admin")) {
       return resolver(root, params, ctx, next);
     } else {
       return Promise.reject("Not authorized");
@@ -40,8 +45,8 @@ export const rootResolver = {
     login: UserResolver.login,
     signup: UserResolver.signup,
     refreshToken: UserResolver.refreshToken,
-    revokeToken: UserResolver.revokeToken,
-    updatePassword: UserResolver.updatePassword
+    revokeToken: mustBeAuthenticated(UserResolver.revokeToken),
+    updatePassword: mustBeAuthenticated(UserResolver.updatePassword)
   },
   User: {}
 };
