@@ -7,5 +7,5 @@ export abstract class Model<T, E> {
     return value;
   }
 
-  abstract toSchema(): E;
+  abstract toGqlSchema(): E;
 }

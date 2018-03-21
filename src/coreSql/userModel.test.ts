@@ -3,6 +3,7 @@ import { sql } from "./connector";
 import { User, ISqlUser } from "./userModel";
 import * as Schema from "../schema";
 import { refreshToken } from "../resolvers/users";
+import { hashPassword, comparePasswords, verifyToken } from "../utils";
 
 const dataKeys = [
   "id",
@@ -45,6 +46,19 @@ describe("User.fromId", () => {
     expect(User.fromId(id)).rejects.toContain(
       `User with id "${id}" does not exist`
     );
+  });
+});
+
+describe("User.login", () => {
+  it("should login user with valid credentials", async () => {
+    const username = "login";
+    const password = "shhh";
+    const user = await User.login(username, password);
+    expect(verifyToken(user.token)).toBeTruthy();
+    const res = await sql("auth")
+      .select()
+      .where("userId", user.getData("id"))
+      .first();
   });
 });
 
@@ -97,10 +111,40 @@ describe("User.toSchema", () => {
   it("should export its contents", async () => {
     const username = "jlrickert";
     const user = await User.fromUsername(username);
-    const payload = user.toSchema();
+    const payload = user.toGqlSchema();
     expect(payload.username).toEqual(username);
     expect(payload.firstName).toEqual("Jared");
     expect(payload.lastName).toEqual("Rickert");
     expect(payload.admin).toEqual(true);
+  });
+});
+
+describe("User.updatePassword", () => {
+  it("should update a users password", async () => {
+    const username = "password_update";
+    const password = "rawr";
+    const user = await User.fromUsername(username);
+    const oldHash = user.getData("hash");
+    user.updatePassword(password);
+    const res = await sql("auth")
+      .select()
+      .where("userId", user.getData("id"))
+      .first();
+
+    const { hash } = res;
+    expect(comparePasswords(password, hash)).toBeTruthy();
+  });
+});
+
+describe("User.revokeToken", () => {
+  it("should remove token from database", async () => {
+    const username = "password_update";
+    const user = await User.fromUsername(username);
+    await user.revokeToken();
+    const res = await sql("auth")
+      .select()
+      .where("userId", user.getData("id"))
+      .first();
+    expect(res.refreshToken).toBeNull();
   });
 });

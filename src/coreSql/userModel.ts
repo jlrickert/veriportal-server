@@ -2,7 +2,12 @@ import { merge } from "lodash";
 import { sql } from "./connector";
 import * as Schema from "../schema";
 import * as Auth from "../utils/auth";
-import { issueJWT, newRefreshToken, hashPassword } from "../utils/auth";
+import {
+  issueJWT,
+  newRefreshToken,
+  hashPassword,
+  comparePasswords
+} from "../utils/auth";
 import { Model } from "../utils/model";
 
 export interface ISqlUser {
@@ -60,7 +65,8 @@ export class User extends Model<ISqlUser, Schema.IUser> {
 
     return query.then(data => {
       if (data) {
-        return Promise.resolve(new User(data));
+        const user = new User(data);
+        return Promise.resolve(user);
       } else {
         return Promise.reject(`User "${username}" does not exist`);
       }
@@ -68,7 +74,13 @@ export class User extends Model<ISqlUser, Schema.IUser> {
   }
 
   static async login(username: string, password: string): Promise<User> {
-    return Promise.reject("not implemented");
+    return User.fromUsername(username).then(async user => {
+      if (await comparePasswords(password, user.getData("hash"))) {
+        return Promise.resolve(user);
+      } else {
+        return Promise.reject("Invalid credentials");
+      }
+    });
   }
 
   static async signup(params: Schema.ISignupInput): Promise<User> {
@@ -113,7 +125,14 @@ export class User extends Model<ISqlUser, Schema.IUser> {
       });
   }
 
-  toSchema(): Schema.IUser {
+  constructor(data: ISqlUser) {
+    super(data);
+    if (!data.refreshToken) {
+      this.updateRefreshToken();
+    }
+  }
+
+  toGqlSchema(): Schema.IUser {
     return {
       username: this.getData("username"),
       firstName: this.getData("firstName"),
@@ -128,7 +147,7 @@ export class User extends Model<ISqlUser, Schema.IUser> {
 
   async revokeToken(): Promise<void> {
     const query = sql("auth")
-      .update("refreshToken", "null")
+      .update("refreshToken", null)
       .where("userId", this.data.id);
 
     return query.then(() => {
@@ -151,9 +170,14 @@ export class User extends Model<ISqlUser, Schema.IUser> {
 
   async updateRefreshToken(): Promise<string> {
     const token = newRefreshToken();
-    return sql("auth")
-      .where("userId", this.data.id)
-      .update({ refreshToken: token }, "token")
-      .then(res => Promise.resolve(res[0]));
+    const query = sql("auth")
+      .where("userId", "=", this.getData("id"))
+      .update({ refreshToken: token }, "refreshToken");
+
+    return query.then(res => {
+      const token = res[0];
+      this.data.refreshToken = token;
+      return Promise.resolve(token);
+    });
   }
 }

@@ -42,7 +42,7 @@ export function issueJWT(
   if (options && options.expiresIn === 0) {
     delete options.expiresIn;
   } else {
-    options = merge({ expiresIn: "15m" }, options);
+    options = merge({ expiresIn: "5m" }, options);
   }
   try {
     return jwt.sign(
