@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as dotenv from "dotenv";
-import { SqlConnectionOptions } from "./connector";
+import { CoreSqlConfig } from "./coreSql";
 
 dotenv.config();
 
@@ -25,6 +25,4 @@ const getSecretKey = key => {
 
 export const secretKey: string = getSecretKey(process.env.SECRET_KEY);
 
-export const knexConfig: SqlConnectionOptions = require("../knexfile")[
-  environment
-];
+export const knexConfig: CoreSqlConfig = require("../knexfile")[environment];

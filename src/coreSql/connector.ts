@@ -1,9 +1,12 @@
 import * as Config from "../config";
 import * as Knex from "knex";
 
-export type SqlConnectionOptions = Knex.Config;
+export type CoreSqlConfig = Knex.Config;
+export function CoreSql(config: CoreSqlConfig) {
+  return Knex(config);
+}
 
-export const sql = Knex(Config.knexConfig);
+export const sql = CoreSql(Config.knexConfig);
 
 export namespace Managment {
   export async function seed(): Promise<void> {

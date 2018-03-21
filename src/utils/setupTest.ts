@@ -1,40 +1,33 @@
 import { graphql, ExecutionResult } from "graphql";
 
-import { SqlConnection } from "./connector";
-import * as Config from "./config";
-import { SqlUsers, IUsers } from "./models";
-import { IUser, IContext } from "./schema/types";
+import * as Config from "../config";
+import * as Core from "../coreSql";
 
-export interface IgqlContextArgs {
+export interface IGqlArgs {
   query: string;
   root?: any;
-  user?: Promise<IUser>;
+  user?: Promise<Core.User>;
   variables?: { [key: string]: any };
 }
 
 export const gqlContext = (
   schema
-): ((args: IgqlContextArgs) => Promise<ExecutionResult>) => {
+): ((args: IGqlArgs) => Promise<ExecutionResult>) => {
   return args =>
     graphql({
       schema,
       source: args.query,
-      contextValue: { user: args.user || Promise.resolve(null), Users },
+      contextValue: { user: args.user || Promise.resolve(null) },
       variableValues: args.variables
     });
 };
 
-export let testDb: SqlConnection;
-export let Users: IUsers;
-
 beforeAll(async () => {
-  testDb = new SqlConnection(Config.knexConfig);
-  Users = new SqlUsers(testDb);
-  await testDb.migrate();
-  await testDb.seed();
+  await Core.Managment.migrate();
+  await Core.Managment.seed();
 });
 
 afterAll(async () => {
-  await testDb.rollback();
-  await testDb.knex.destroy();
+  await Core.Managment.rollback();
+  await Core.sql.destroy();
 });
