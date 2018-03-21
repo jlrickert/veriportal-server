@@ -23,10 +23,10 @@ export async function authenticateJWT(
     const token = header.toString().replace("Bearer ", "");
     try {
       const { username } = verifyToken(token);
-      return await findUser(username);
+      return findUser(username);
     } catch (err) {
       if (err instanceof jwt.JsonWebTokenError) {
-        return null;
+        return Promise.resolve(null);
       }
       throw err;
     }

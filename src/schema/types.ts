@@ -4,20 +4,20 @@ export interface IContext {
   user: Promise<Core.User>;
 }
 
-export interface IUser {
+export interface ISchemaUser {
   username: string;
   firstName?: string;
   lastName?: string;
   admin: boolean;
 }
 
-export interface IAuthPayload {
-  user: IUser;
+export interface ISchemaAuthPayload {
+  user: ISchemaUser;
   token: string;
   refreshToken: string;
 }
 
-export interface ISignupInput {
+export interface ISchemaSignupInput {
   username: string;
   password: string;
   firstName?: string;

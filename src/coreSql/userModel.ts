@@ -23,7 +23,7 @@ export interface ISqlUser {
   [key: string]: any;
 }
 
-export class User extends Model<ISqlUser, Schema.IUser> {
+export class User extends Model<ISqlUser, Schema.ISchemaUser> {
   static async fromToken(token: string): Promise<User> {
     const query = sql("auth")
       .select("*")
@@ -75,7 +75,7 @@ export class User extends Model<ISqlUser, Schema.IUser> {
 
   static async login(username: string, password: string): Promise<User> {
     return User.fromUsername(username).then(async user => {
-      if (await comparePasswords(password, user.getData("hash"))) {
+      if (await comparePasswords(password, await user.getData("hash"))) {
         return Promise.resolve(user);
       } else {
         return Promise.reject("Invalid credentials");
@@ -83,7 +83,7 @@ export class User extends Model<ISqlUser, Schema.IUser> {
     });
   }
 
-  static async signup(params: Schema.ISignupInput): Promise<User> {
+  static async signup(params: Schema.ISchemaSignupInput): Promise<User> {
     const hash = await Auth.hashPassword(params.password);
     const refreshToken = Auth.newRefreshToken();
 
@@ -132,31 +132,31 @@ export class User extends Model<ISqlUser, Schema.IUser> {
     }
   }
 
-  toGqlSchema(): Schema.IUser {
-    return {
+  async toGqlSchema(): Promise<Schema.ISchemaUser> {
+    return Promise.resolve({
       username: this.getData("username"),
       firstName: this.getData("firstName"),
       lastName: this.getData("lastName"),
       admin: this.getData("admin")
-    };
+    });
   }
 
   get token(): string {
     return issueJWT({ username: this.data.username, admin: this.data.admin });
   }
 
-  async revokeToken(): Promise<void> {
+  async revokeToken(): Promise<this> {
     const query = sql("auth")
       .update("refreshToken", null)
       .where("userId", this.data.id);
 
     return query.then(() => {
       this.data.refreshToken = "";
-      return Promise.resolve();
+      return Promise.resolve(this);
     });
   }
 
-  async updatePassword(password: string): Promise<void> {
+  async updatePassword(password: string): Promise<this> {
     const hash = await hashPassword(password);
     const query = sql("auth")
       .update({ hash })
@@ -164,11 +164,11 @@ export class User extends Model<ISqlUser, Schema.IUser> {
 
     return query.then(() => {
       this.data.hash = hash;
-      return Promise.resolve();
+      return Promise.resolve(this);
     });
   }
 
-  async updateRefreshToken(): Promise<string> {
+  async updateRefreshToken(): Promise<this> {
     const token = newRefreshToken();
     const query = sql("auth")
       .where("userId", "=", this.getData("id"))
@@ -177,7 +177,7 @@ export class User extends Model<ISqlUser, Schema.IUser> {
     return query.then(res => {
       const token = res[0];
       this.data.refreshToken = token;
-      return Promise.resolve(token);
+      return Promise.resolve(this);
     });
   }
 }
