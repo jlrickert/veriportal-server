@@ -1,39 +1,17 @@
-import { IUsers } from "../models";
+import * as Core from "../coreSql";
 
-export interface ISchemaContext {
-  user?: Promise<IUser>;
-  Users?: IUsers;
+export interface IContext {
+  user: Promise<Core.User>;
 }
 
-export interface ISchemaType {
-  [name: string]: any;
-}
-
-export class GraphqlModel {
-  schema: string[] = [];
-  toObject(): Object {
-    let data;
-    this.schema.forEach(item => {
-      data["item"] = this["item"];
-    });
-    return data;
-  }
-}
-
-export interface IUser extends ISchemaType {
-  id: number;
+export interface IUser {
   username: string;
   firstName?: string;
   lastName?: string;
   admin: boolean;
-
-  refreshToken?: string;
-  hash?: string;
-  created_at?: any;
-  updated_at?: any;
 }
 
-export interface IAuthPayload extends ISchemaType {
+export interface IAuthPayload {
   user: IUser;
   token: string;
   refreshToken: string;

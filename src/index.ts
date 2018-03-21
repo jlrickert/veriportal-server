@@ -4,7 +4,6 @@ import { schema } from "./schema";
 import { SqlConnection } from "./connector";
 import { appServerWithDefaults } from "./server";
 
-const conn = new SqlConnection(Config.knexConfig);
-const app = appServerWithDefaults(schema, conn);
+const app = appServerWithDefaults(schema);
 
 app.listen(Config.port, () => console.log(`Listening on port ${Config.port}`));

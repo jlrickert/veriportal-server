@@ -3,7 +3,7 @@ import { graphql, ExecutionResult } from "graphql";
 import { SqlConnection } from "./connector";
 import * as Config from "./config";
 import { SqlUsers, IUsers } from "./models";
-import { IUser, ISchemaContext } from "./schema/types";
+import { IUser, IContext } from "./schema/types";
 
 export interface IgqlContextArgs {
   query: string;

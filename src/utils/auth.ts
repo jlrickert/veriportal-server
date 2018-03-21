@@ -2,12 +2,11 @@ import { merge } from "lodash";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { SignOptions as ISignOptions } from "jsonwebtoken";
-import { Request } from "express";
+import { Request, Response } from "express";
 import * as randToken from "rand-token";
 
-import * as config from "./config";
-import { IUser } from "./schema/types";
-import { IUsers } from "./models";
+import * as config from "../config";
+import * as Core from "../coreSql";
 
 export interface IJWTPayload {
   username: string;
@@ -16,8 +15,9 @@ export interface IJWTPayload {
 
 export async function authenticateJWT(
   req: Request,
-  findUser: (username: string) => Promise<IUser>
-): Promise<IUser | null> {
+  res: Response,
+  findUser: (username: string) => Promise<Core.User>
+): Promise<Core.User | null> {
   const header = req.headers.authorization || null;
   if (header) {
     const token = header.toString().replace("Bearer ", "");

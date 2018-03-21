@@ -4,21 +4,17 @@ import * as cors from "cors";
 import * as express from "express";
 import { graphqlExpress, graphiqlExpress } from "apollo-server-express";
 
-import { authenticateJWT } from "./auth";
-import * as config from "./config";
-import { IUser, ISchemaContext } from "./schema";
-import { TConnection } from "./connector";
-import { SqlUsers, IUsers } from "./models";
-import { isProduction } from "./config";
+import * as Util from "./utils";
+import * as Config from "./config";
+import * as Core from "./coreSql";
+import * as Schema from "./schema";
 
 export type IGraphqlServerOptions = {
   debug?: boolean;
-  connector: TConnection;
   authenticate: (
     req: express.Request,
-    res: express.Response,
-    findUser: (username: string) => Promise<IUser>
-  ) => Promise<IUser>;
+    res: express.Response
+  ) => Promise<Core.User>;
 };
 
 export const appServer = (
@@ -27,44 +23,33 @@ export const appServer = (
 ): express.Express => {
   const app = express();
 
-  const Users_: IUsers = new SqlUsers(opts.connector);
-
   const endpoint = app.use(
-    config.endpoint,
+    Config.endpoint,
     bodyParser.json(),
     graphqlExpress((req, res) => ({
       schema,
       debug: opts.debug,
       context: {
-        user: opts.authenticate(req, res, Users_.fetchUserByUsername),
-        Users: Users_
-      } as ISchemaContext
+        user: opts.authenticate(req, res)
+      } as Schema.IContext
     }))
   );
 
-  if (!isProduction) {
-    app.use("/graphiql", graphiqlExpress({ endpointURL: config.endpoint }));
+  if (!Config.isProduction) {
+    app.use("/graphiql", graphiqlExpress({ endpointURL: Config.endpoint }));
   }
 
   return app;
 };
 
 export const appServerWithDefaults = (
-  schema: GraphQLSchema,
-  conn: TConnection
+  schema: GraphQLSchema
 ): express.Express => {
   return appServer(schema, {
-    debug: !isProduction,
-    connector: conn,
-    authenticate: async (req, res) => {
-      return authenticateJWT(req, async username => {
-        const user = await conn.knex
-          .select("*")
-          .from("users")
-          .where("username", username)
-          .first();
-        return user as IUser;
-      });
-    }
+    debug: !Config.isProduction,
+    authenticate: (req, res) =>
+      Util.authenticateJWT(req, res, async username =>
+        Core.User.fromUsername(username)
+      )
   });
 };

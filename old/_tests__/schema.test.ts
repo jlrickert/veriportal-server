@@ -1,7 +1,7 @@
 import { graphql } from "graphql";
 
 import { gqlContext, Users, testDb } from "../setupTest";
-import { buildSchema, typeDefs, ISchemaContext, IUser } from "../schema";
+import { buildSchema, typeDefs, IContext, IUser } from "../schema";
 
 describe("Graphql schema", () => {
   it("should have context information", async () => {
@@ -9,7 +9,7 @@ describe("Graphql schema", () => {
       typeDefs,
       resolvers: {
         Query: {
-          me(root, param, ctx: ISchemaContext): Promise<IUser> {
+          me(root, param, ctx: IContext): Promise<IUser> {
             return ctx.user;
           }
         }

@@ -8,8 +8,6 @@ import {
   issueJWT,
   comparePasswords
 } from "../auth";
-import { Promise } from "bluebird";
-import { error } from "util";
 
 export interface IUsers {
   fetchUserById: (id: number) => Promise<IUser>;

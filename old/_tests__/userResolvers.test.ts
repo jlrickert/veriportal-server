@@ -1,6 +1,6 @@
 import { rootResolver } from "../resolvers";
 import { Users, testDb, gqlContext } from "../setupTest";
-import { schema, ISchemaContext, IUser } from "../schema";
+import { schema, IContext, IUser } from "../schema";
 import { verifyToken } from "../auth";
 
 const gql = gqlContext(schema);

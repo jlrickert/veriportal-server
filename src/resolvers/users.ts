@@ -1,21 +1,17 @@
-import { IUser, ISchemaContext, IAuthPayload, ISignupInput } from "../schema";
+import { IUser, IContext, IAuthPayload, ISignupInput } from "../schema";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Query
 ////////////////////////////////////////////////////////////////////////////////
-export async function me(root, params, ctx: ISchemaContext): Promise<IUser> {
+export async function me(root, params, ctx: IContext): Promise<IUser> {
   return ctx.user;
 }
 
-export async function user(root, { id }, ctx: ISchemaContext): Promise<IUser> {
+export async function user(root, { id }, ctx: IContext): Promise<IUser> {
   return ctx.Users.fetchUserById(id);
 }
 
-export async function users(
-  root,
-  params,
-  ctx: ISchemaContext
-): Promise<IUser[]> {
+export async function users(root, params, ctx: IContext): Promise<IUser[]> {
   return ctx.Users.fetchUsers();
 }
 
@@ -25,7 +21,7 @@ export async function users(
 export async function login(
   root,
   { username, password },
-  ctx: ISchemaContext
+  ctx: IContext
 ): Promise<IAuthPayload> {
   return ctx.Users.login(username, password);
 }
@@ -33,7 +29,7 @@ export async function login(
 export async function signup(
   root,
   { params },
-  ctx: ISchemaContext
+  ctx: IContext
 ): Promise<IAuthPayload> {
   return ctx.Users.signup(params);
 }
@@ -41,16 +37,12 @@ export async function signup(
 export async function refreshToken(
   root,
   { token },
-  ctx: ISchemaContext
+  ctx: IContext
 ): Promise<IAuthPayload> {
   return ctx.Users.refreshToken(token);
 }
 
-export async function revokeToken(
-  root,
-  params,
-  ctx: ISchemaContext
-): Promise<IUser> {
+export async function revokeToken(root, params, ctx: IContext): Promise<IUser> {
   if (!await ctx.user) {
     return ctx.Users.revokeTokens(await ctx.user);
   }
@@ -59,7 +51,7 @@ export async function revokeToken(
 export async function updatePassword(
   root,
   { password },
-  ctx: ISchemaContext
+  ctx: IContext
 ): Promise<IAuthPayload> {
   if (!ctx.user) {
     throw new Error("Not authorized to change password");

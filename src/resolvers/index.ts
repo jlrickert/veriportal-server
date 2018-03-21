@@ -1,10 +1,10 @@
-import { IUser, ISchemaContext, IAuthPayload, ISignupInput } from "../schema";
+import { IUser, IContext, IAuthPayload, ISignupInput } from "../schema";
 import * as UserResolver from "./users";
 
 export type Resolver<T> = (
   root: any,
   params: any,
-  ctx: ISchemaContext,
+  ctx: IContext,
   next: any
 ) => Promise<T>;
 
