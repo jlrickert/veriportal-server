@@ -18,6 +18,8 @@ exports.up = async (knex, Promise) => {
         .notNullable();
 
       t.timestamps(true, true);
+
+      t.index("username");
     });
   }
 };

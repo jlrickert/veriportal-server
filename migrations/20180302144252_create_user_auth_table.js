@@ -18,6 +18,8 @@ exports.up = async (knex, Promise) => {
       t.string("hash");
 
       t.timestamps(true, true);
+
+      t.index("refreshToken");
     });
   }
 };

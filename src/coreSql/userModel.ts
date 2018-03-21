@@ -3,6 +3,7 @@ import { sql } from "./connector";
 import * as Schema from "../schema";
 import * as Auth from "../utils/auth";
 import { issueJWT, newRefreshToken, hashPassword } from "../utils/auth";
+import { Model } from "../utils/model";
 
 export interface ISqlUser {
   id: number;
@@ -17,7 +18,7 @@ export interface ISqlUser {
   [key: string]: any;
 }
 
-export class User {
+export class User extends Model<ISqlUser, Schema.IUser> {
   static async fromToken(token: string): Promise<User> {
     const query = sql("auth")
       .select("*")
@@ -112,20 +113,13 @@ export class User {
       });
   }
 
-  private constructor(private data: ISqlUser) {}
-
   toSchema(): Schema.IUser {
     return {
-      username: this.data.username,
-      firstName: this.data.firstName,
-      lastName: this.data.lastName,
-      admin: this.data.admin
+      username: this.getData("username"),
+      firstName: this.getData("firstName"),
+      lastName: this.getData("lastName"),
+      admin: this.getData("admin")
     };
-  }
-
-  getData<K extends keyof ISqlUser>(key: K): ISqlUser[K] {
-    const value = this.data[key];
-    return value;
   }
 
   get token(): string {

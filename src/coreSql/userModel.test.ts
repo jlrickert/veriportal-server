@@ -2,7 +2,6 @@ import "../utils/setupTest";
 import { sql } from "./connector";
 import { User, ISqlUser } from "./userModel";
 import * as Schema from "../schema";
-import { hash } from "bcryptjs";
 import { refreshToken } from "../resolvers/users";
 
 const dataKeys = [
@@ -91,5 +90,17 @@ describe("User.fromToken", () => {
     dataKeys.forEach(key =>
       expect(expectedUser.getData(key)).toEqual(user.getData(key))
     );
+  });
+});
+
+describe("User.toSchema", () => {
+  it("should export its contents", async () => {
+    const username = "jlrickert";
+    const user = await User.fromUsername(username);
+    const payload = user.toSchema();
+    expect(payload.username).toEqual(username);
+    expect(payload.firstName).toEqual("Jared");
+    expect(payload.lastName).toEqual("Rickert");
+    expect(payload.admin).toEqual(true);
   });
 });
