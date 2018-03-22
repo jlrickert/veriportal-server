@@ -20,8 +20,8 @@ describe("User.fromUsername", () => {
   const username = "jlrickert";
   it("should be able to retrieve user from database", async () => {
     const user = await User.fromUsername(username);
-    expect(await user.getData("id")).toEqual(id);
-    expect(await user.getData("username")).toEqual(username);
+    expect(user.id).toEqual(id);
+    expect(user.username).toEqual(username);
   });
 
   it("should reject retrieving a non existing user", async () => {
@@ -36,8 +36,8 @@ describe("User.fromId", () => {
     const username = "jlrickert";
     const id = 1;
     const user = await User.fromId(id);
-    expect(await user.getData("id")).toEqual(id);
-    expect(await user.getData("username")).toEqual(username);
+    expect(user.id).toEqual(id);
+    expect(user.username).toEqual(username);
   });
 
   it("should reject retrieving a non existing user", async () => {
@@ -55,10 +55,23 @@ describe("User.login", () => {
     const password = "shhh";
     const user = await User.login(username, password);
     expect(verifyToken(user.token)).toBeTruthy();
-    const res = await sql("auth")
+    const res = await sql("users")
       .select()
-      .where("userId", await user.getData("id"))
-      .first();
+      .where("users.id", user.id)
+      .join("auth", "auth.user_id", "users.id")
+      .first()
+      .then(user => Promise.resolve(user as ISqlUser));
+
+    expect(res.id).toEqual(user.id);
+    expect(res.username).toEqual(user.username);
+  });
+
+  it("should reject on invalid password", async () => {
+    const username = "login";
+    const password = "meowwww";
+    expect(User.login(username, password)).rejects.toContain(
+      "Invalid credentials"
+    );
   });
 });
 
@@ -71,10 +84,12 @@ describe("User.signup", () => {
       password: "shhh"
     };
     const newUser = await User.signup(signupInput);
-    const user = await User.fromUsername(await newUser.getData("username"));
-    dataKeys.forEach(async key =>
-      expect(await newUser.getData(key)).toEqual(await user.getData(key))
-    );
+    const user = await User.fromUsername(newUser.username);
+    expect(newUser.equals(user)).toBeTruthy();
+    expect(newUser.id).toEqual(user.id);
+    expect(newUser.firstName).toEqual(signupInput.firstName);
+    expect(newUser.lastName).toEqual(signupInput.lastName);
+    expect(newUser.admin).toBeFalsy();
   });
 
   it("should reject create a user with a non unique username", () => {
@@ -101,21 +116,24 @@ describe("User.fromToken", () => {
     const username = "jlrickert";
     const user = await User.fromToken(token);
     const expectedUser = await User.fromUsername(username);
-    dataKeys.forEach(async key =>
-      expect(await expectedUser.getData(key)).toEqual(await user.getData(key))
-    );
+
+    expect(user.equals(user)).toBeTruthy();
+    expect(user.id).toEqual(user.id);
+    expect(user.firstName).toEqual(expectedUser.firstName);
+    expect(user.lastName).toEqual(expectedUser.lastName);
+    expect(user.admin).toEqual(expectedUser.admin);
   });
 });
 
-describe("User.toSchema", () => {
+describe("User.toGqlSchema", () => {
   it("should export its contents", async () => {
     const username = "jlrickert";
     const user = await User.fromUsername(username);
     const payload = await user.toGqlSchema();
-    expect(payload.username).toEqual(user.getData("username"));
-    expect(payload.firstName).toEqual(user.getData("firstName"));
-    expect(payload.lastName).toEqual(user.getData("lastName"));
-    expect(payload.admin).toEqual(user.getData("admin"));
+    expect(payload.username).toEqual(user.username);
+    expect(payload.firstName).toEqual(user.firstName);
+    expect(payload.lastName).toEqual(user.lastName);
+    expect(payload.admin).toEqual(user.admin);
   });
 });
 
@@ -124,11 +142,10 @@ describe("User.updatePassword", () => {
     const username = "password_update";
     const password = "rawr";
     const user = await User.fromUsername(username);
-    const oldHash = await user.getData("hash");
     await user.updatePassword(password);
     const res = await sql("auth")
       .select()
-      .where("userId", await user.getData("id"))
+      .where("user_id", user.id)
       .first();
 
     const { hash } = res;
@@ -143,8 +160,10 @@ describe("User.revokeToken", () => {
     await user.revokeToken();
     const res = await sql("auth")
       .select()
-      .where("userId", await user.getData("id"))
+      .where("user_id", user.id)
       .first();
-    expect(res.refreshToken).toBeNull();
+    const { refresh_token } = res;
+    expect(refresh_token).toBeNull();
+    expect(user.refreshToken).toBeNull();
   });
 });

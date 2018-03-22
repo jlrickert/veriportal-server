@@ -32,7 +32,7 @@ export async function users(
 ): Promise<ISchemaUser[]> {
   const query = sql("users")
     .select("*")
-    .join("auth", "users.id", "auth.userId");
+    .join("auth", "users.id", "auth.user_id");
 
   return query.then(res => {
     const users: Promise<ISchemaUser>[] = res.map((userData: ISqlUser) =>

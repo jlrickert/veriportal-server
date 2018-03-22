@@ -1,4 +1,3 @@
-import { merge } from "lodash";
 import { sql } from "./connector";
 import * as Schema from "../schema";
 import * as Auth from "../utils/auth";
@@ -9,59 +8,28 @@ import {
   comparePasswords
 } from "../utils/auth";
 import { Model } from "../utils/model";
+import { ISchemaUser } from "../schema";
 
 export interface ISqlUser {
-  id: number;
-  username: string;
-  firstName: string;
-  lastName: string;
-  admin: boolean;
+  id?: number;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  admin?: boolean;
   created_at?: string;
   updated_at?: string;
-  hash: string;
-  refreshToken: string;
-  [key: string]: any;
+  hash?: string;
+  refresh_token?: string;
 }
 
 export class User extends Model<ISqlUser, Schema.ISchemaUser> {
-  static async fromToken(token: string): Promise<User> {
-    const query = sql("auth")
-      .select("*")
-      .where("refreshToken", token)
-      .join("users", "users.id", "auth.userId")
-      .first();
-
-    return query.then(data => {
-      if (data) {
-        return Promise.resolve(new User(data));
-      } else {
-        return Promise.reject("Invalid token");
-      }
-    });
-  }
-
-  static async fromId(id: number): Promise<User> {
-    const query = sql("users")
-      .join("auth", "users.id", "auth.userId")
-      .select("*")
-      .where("users.id", id)
-      .first();
-
-    return query.then(data => {
-      if (data) {
-        return Promise.resolve(new User(data));
-      } else {
-        return Promise.reject(`User with id "${id}" does not exist`);
-      }
-    });
-  }
-
   static async fromUsername(username: string): Promise<User> {
     const query = sql("users")
-      .join("auth", "auth.userId", "users.id")
+      .join("auth", "auth.user_id", "users.id")
       .select("*")
       .where("username", username)
-      .first();
+      .first()
+      .then(user => Promise.resolve(user as ISqlUser));
 
     return query.then(data => {
       if (data) {
@@ -73,9 +41,47 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
     });
   }
 
+  static async fromId(id: number): Promise<User> {
+    const query = sql("users")
+      .join("auth", "users.id", "auth.user_id")
+      .select("*")
+      .where("users.id", id)
+      .first()
+      .then(user => Promise.resolve(user as ISqlUser));
+
+    return query.then(data => {
+      if (data) {
+        return Promise.resolve(new User(data));
+      } else {
+        return Promise.reject(`User with id "${id}" does not exist`);
+      }
+    });
+  }
+
+  static async fromToken(token: string): Promise<User> {
+    const query = sql("auth")
+      .select("*")
+      .where("refresh_token", token)
+      .join("users", "users.id", "auth.user_id")
+      .first()
+      .then(user => Promise.resolve(user as ISqlUser));
+
+    return query.then(data => {
+      if (data) {
+        return Promise.resolve(new User(data));
+      } else {
+        return Promise.reject("Invalid token");
+      }
+    });
+  }
+
   static async login(username: string, password: string): Promise<User> {
     return User.fromUsername(username).then(async user => {
-      if (await comparePasswords(password, await user.getData("hash"))) {
+      const hash = await user.getData("hash");
+      if (!hash) {
+        console.warn("hash is invalid for user ${username}");
+        return Promise.reject("Invalid credentials");
+      } else if (await comparePasswords(password, hash)) {
         return Promise.resolve(user);
       } else {
         return Promise.reject("Invalid credentials");
@@ -89,8 +95,8 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
 
     const userData = {
       username: params.username,
-      firstName: params.firstName,
-      lastName: params.lastName,
+      first_name: params.firstName,
+      last_name: params.lastName,
       admin: false
     };
 
@@ -98,15 +104,22 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
       .transaction(async trx => {
         const userQuery = trx("users")
           .insert(userData, "*")
-          .then(res => Promise.resolve(res[0]));
+          .then(res => res[0] as ISqlUser);
 
         const authQuery = userQuery
           .then(userData =>
-            trx("auth").insert({ userId: userData.id, hash, refreshToken }, "*")
+            trx("auth").insert(
+              {
+                user_id: userData.id,
+                hash,
+                refresh_token: refreshToken
+              },
+              "*"
+            )
           )
           .then(res => {
             if (res) {
-              return Promise.resolve(res[0].id);
+              return res[0].id;
             } else {
               Promise.reject(res);
             }
@@ -127,31 +140,64 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
 
   constructor(data: ISqlUser) {
     super(data);
-    if (!data.refreshToken) {
+    if (!data.refresh_token) {
       this.updateRefreshToken();
     }
   }
 
-  async toGqlSchema(): Promise<Schema.ISchemaUser> {
-    return Promise.resolve({
-      username: this.getData("username"),
-      firstName: this.getData("firstName"),
-      lastName: this.getData("lastName"),
-      admin: this.getData("admin")
-    });
+  toGqlSchema(): Schema.ISchemaUser {
+    return {
+      username: this.username,
+      firstName: this.firstName as string | undefined,
+      lastName: this.lastName as string | undefined,
+      admin: this.admin
+    };
+  }
+
+  get id(): number {
+    return this.getData("id") as number;
+  }
+
+  get username(): string {
+    return this.getData("username") as string;
+  }
+
+  get firstName(): string | null {
+    return this.getData("first_name")!;
+  }
+
+  get lastName(): string | null {
+    return this.getData("last_name")!;
+  }
+
+  get admin(): boolean {
+    return this.getData("admin") as boolean;
   }
 
   get token(): string {
-    return issueJWT({ username: this.data.username, admin: this.data.admin });
+    return issueJWT({ username: this.username, admin: this.admin });
+  }
+
+  get refreshToken(): string | null {
+    const value = this.getData("refresh_token");
+    if (value) {
+      return value;
+    } else {
+      return null;
+    }
+  }
+
+  equals(user: User): boolean {
+    return this.username === user.username;
   }
 
   async revokeToken(): Promise<this> {
     const query = sql("auth")
-      .update("refreshToken", null)
-      .where("userId", this.data.id);
+      .update({ refresh_token: null })
+      .where("user_id", this.id);
 
     return query.then(() => {
-      this.data.refreshToken = "";
+      this.data.refresh_token = "";
       return Promise.resolve(this);
     });
   }
@@ -160,7 +206,7 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
     const hash = await hashPassword(password);
     const query = sql("auth")
       .update({ hash })
-      .where("userId", this.data.id);
+      .where("user_id", this.id);
 
     return query.then(() => {
       this.data.hash = hash;
@@ -171,12 +217,11 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
   async updateRefreshToken(): Promise<this> {
     const token = newRefreshToken();
     const query = sql("auth")
-      .where("userId", "=", this.getData("id"))
-      .update({ refreshToken: token }, "refreshToken");
+      .where("user_id", "=", this.id)
+      .update({ refresh_token: token });
 
     return query.then(res => {
-      const token = res[0];
-      this.data.refreshToken = token;
+      this.data.refresh_token = token;
       return Promise.resolve(this);
     });
   }

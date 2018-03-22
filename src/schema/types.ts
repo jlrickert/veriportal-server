@@ -17,6 +17,11 @@ export interface ISchemaAuthPayload {
   refreshToken: string;
 }
 
+export interface IUsersFilterInput {
+  limit?: number;
+  offset?: number;
+}
+
 export interface ISchemaSignupInput {
   username: string;
   password: string;

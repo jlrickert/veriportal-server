@@ -40,38 +40,38 @@ exports.seed = async (knex, Promise) => {
     [
       {
         username: "jlrickert",
-        firstName: "Jared",
-        lastName: "Rickert",
+        first_name: "Jared",
+        last_name: "Rickert",
         admin: true
       },
       {
         username: "password_update",
-        firstName: "password",
-        lastName: "update",
+        first_name: "password",
+        last_name: "update",
         admin: false
       },
       {
         username: "login",
-        firstName: "firstName",
-        lastName: "lastName",
+        first_name: "firstName",
+        last_name: "last_name",
         admin: false
       },
       {
         username: "rrabbit",
-        firstName: "Roger",
-        lastName: "Rabbit",
+        first_name: "Roger",
+        last_name: "Rabbit",
         admin: false
       },
       {
         username: "cjacky",
-        firstName: "Jacky",
-        lastName: "Chan",
+        first_name: "Jacky",
+        last_name: "Chan",
         admin: false
       },
       {
         username: "gnr",
-        firstName: "Guns",
-        lastName: "Roses",
+        first_name: "Guns",
+        last_name: "Roses",
         admin: false
       }
     ],
@@ -81,9 +81,9 @@ exports.seed = async (knex, Promise) => {
   return knex("auth").insert(
     users.map((user, i) => {
       return {
-        userId: user.id,
+        user_id: user.id,
         hash: hashes[i % hashes.length],
-        refreshToken: refreshTokens[i % refreshTokens.length]
+        refresh_token: refreshTokens[i % refreshTokens.length]
       };
     })
   );
