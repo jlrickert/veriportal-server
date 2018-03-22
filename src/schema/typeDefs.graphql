@@ -6,7 +6,13 @@ type Query {
   user(username: ID!): User!
 
   """fetch users"""
-  users: [User!]
+  users(params: UsersFilterInput): [User!]
+
+  """fetch document"""
+  document(id: ID!): Document!
+
+  """fetch documents"""
+  documents: [Document!]
 }
 
 type Mutation {
@@ -34,6 +40,7 @@ type User {
   firstName: String
   lastName: String
   admin: Boolean!
+  documents: [Document!]
 }
 
 type AuthPayload {
@@ -42,9 +49,24 @@ type AuthPayload {
   refreshToken: String!
 }
 
+type Document {
+  id: ID!
+  name: String!
+  author: String
+  dueDate: String
+  description: String
+  links: [String!]
+  docType: String!
+}
+
 input SignupInput {
   username: String!
   password: String!
   firstName: String
   lastName: String
+}
+
+input UsersFilterInput {
+  limit: Int
+  offset: Int
 }

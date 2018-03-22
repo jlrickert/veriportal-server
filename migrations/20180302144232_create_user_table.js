@@ -5,12 +5,12 @@ exports.up = async (knex, Promise) => {
       t.increments("id").primary();
 
       t
-        .string("username")
+        .text("username")
         .unique()
         .notNullable();
 
-      t.string("firstName");
-      t.string("lastName");
+      t.text("firstName");
+      t.text("lastName");
 
       t
         .boolean("admin")

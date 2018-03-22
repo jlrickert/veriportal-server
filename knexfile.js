@@ -11,14 +11,20 @@ module.exports = {
     client: "pg",
     connection: Object.assign({}, DbConfig, {
       database: DbConfig.database + "-dev"
-    })
+    }),
+    seeds: {
+      directory: "./seeds/dev"
+    }
   },
 
   test: PG_CONNECTION_STRING && {
     client: "pg",
     connection: Object.assign({}, DbConfig, {
       database: DbConfig.database + "-test"
-    })
+    }),
+    seeds: {
+      directory: "./seeds/test"
+    }
   },
 
   production: PG_CONNECTION_STRING && {
@@ -30,6 +36,9 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations"
+    },
+    seeds: {
+      directory: "./seeds/core"
     }
   }
 };

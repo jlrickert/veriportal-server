@@ -13,9 +13,9 @@ exports.up = async (knex, Promise) => {
         .onDelete("CASCADE")
         .onUpdate("CASCADE");
 
-      t.string("refreshToken").unique();
+      t.text("refreshToken").unique();
 
-      t.string("hash");
+      t.text("hash");
 
       t.timestamps(true, true);
 
