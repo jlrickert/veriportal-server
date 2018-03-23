@@ -32,7 +32,7 @@ type Mutation {
   updatePassword(password: String!): AuthPayload!
 
   """Creates a new account if username is not taken"""
-  signup(params: SignupInput): AuthPayload!
+  signup(params: SignupInput!): AuthPayload!
 }
 
 type User {

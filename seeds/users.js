@@ -53,7 +53,7 @@ exports.seed = async (knex, Promise) => {
       {
         username: "login",
         first_name: "firstName",
-        last_name: "last_name",
+        last_name: "lastName",
         admin: false
       },
       {

@@ -26,7 +26,7 @@ export function mustBeAuthenticated<T>(resolver: Resolver<T>): Resolver<T> {
 export function mustBeAdmin<T>(resolver: Resolver<T>): Resolver<T> {
   return async (root, params, ctx, next) => {
     const user = await ctx.user;
-    if (user!.getData("admin")) {
+    if (user.admin) {
       return resolver(root, params, ctx, next);
     } else {
       return Promise.reject("Not authorized");

@@ -164,6 +164,6 @@ describe("User.revokeToken", () => {
       .first();
     const { refresh_token } = res;
     expect(refresh_token).toBeNull();
-    expect(user.refreshToken).toBeNull();
+    expect(user.refreshToken).not.toEqual(refresh_token);
   });
 });

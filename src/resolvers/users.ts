@@ -3,7 +3,8 @@ import {
   ISchemaUser,
   IContext,
   ISchemaAuthPayload,
-  ISchemaSignupInput
+  ISchemaSignupInput,
+  ISchemaUsersFilterInput
 } from "../schema";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,12 +28,32 @@ export async function user(
 
 export async function users(
   root: any,
-  params: {},
+  { params }: { params: ISchemaUsersFilterInput },
   ctx: IContext
 ): Promise<ISchemaUser[]> {
-  const query = sql("users")
-    .select("*")
-    .join("auth", "users.id", "auth.user_id");
+  const lowestRowId = 1;
+  const defaultLimit = 20;
+  const limit =
+    params.limit === undefined || params.limit < lowestRowId
+      ? defaultLimit
+      : params.limit;
+
+  const defaultOffset = lowestRowId;
+  const offset =
+    params.offset === undefined || params.offset < lowestRowId
+      ? defaultOffset
+      : params.offset + lowestRowId;
+
+  const query = sql
+    .with("user_table", qb => {
+      qb
+        .select("*", sql.raw("ROW_NUMBER() OVER (ORDER BY username) as row_id"))
+        .join("auth", "auth.user_id", "users.id")
+        .from("users");
+    })
+    .limit(limit)
+    .where("user_table.row_id", ">=", offset)
+    .from("user_table");
 
   return query.then(res => {
     const users: Promise<ISchemaUser>[] = res.map((userData: ISqlUser) =>
@@ -55,7 +76,7 @@ export async function login(
 
 export async function signup(
   root: any,
-  params: ISchemaSignupInput,
+  { params }: { params: ISchemaSignupInput },
   ctx: IContext
 ): Promise<ISchemaAuthPayload> {
   return User.signup(params).then(createIAuthPayload);
@@ -91,8 +112,8 @@ export async function updatePassword(
 
 async function createIAuthPayload(user: User): Promise<ISchemaAuthPayload> {
   return Promise.resolve({
-    user: await user.toGqlSchema(),
+    user: user.toGqlSchema(),
     token: user.token,
-    refreshToken: await user.getData("refreshToken")
+    refreshToken: user.refreshToken as string
   });
 }

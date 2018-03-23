@@ -183,7 +183,9 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
     if (value) {
       return value;
     } else {
-      return null;
+      const token = newRefreshToken();
+      this.updateRefreshToken(token);
+      return token;
     }
   }
 
@@ -214,8 +216,7 @@ export class User extends Model<ISqlUser, Schema.ISchemaUser> {
     });
   }
 
-  async updateRefreshToken(): Promise<this> {
-    const token = newRefreshToken();
+  async updateRefreshToken(token: string = newRefreshToken()): Promise<this> {
     const query = sql("auth")
       .where("user_id", "=", this.id)
       .update({ refresh_token: token });

@@ -5,7 +5,7 @@ import { SignOptions as ISignOptions } from "jsonwebtoken";
 import { Request, Response } from "express";
 import * as randToken from "rand-token";
 
-import * as config from "../config";
+import * as Config from "../config";
 import * as Core from "../coreSql";
 
 export interface IJWTPayload {
@@ -42,12 +42,13 @@ export function issueJWT(
   if (options && options.expiresIn === 0) {
     delete options.expiresIn;
   } else {
-    options = merge({ expiresIn: "5m" }, options);
+    const expiresIn = Config.isProduction ? "15m" : "1h";
+    options = merge({ expiresIn }, options);
   }
   try {
     return jwt.sign(
       { username: params.username, admin: params.admin },
-      config.secretKey,
+      Config.secretKey,
       options
     );
   } catch (err) {
@@ -56,7 +57,7 @@ export function issueJWT(
 }
 
 export function verifyToken(token: string): IJWTPayload {
-  return jwt.verify(token, config.secretKey) as IJWTPayload;
+  return jwt.verify(token, Config.secretKey) as IJWTPayload;
 }
 
 export async function comparePasswords(
